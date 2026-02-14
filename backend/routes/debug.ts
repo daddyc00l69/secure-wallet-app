@@ -1,8 +1,31 @@
 import express from 'express';
-
+import net from 'net';
 import { getTransporter } from '../utils/email';
 
 const router = express.Router();
+
+const checkConnection = (host: string, port: number, timeout = 5000): Promise<string> => {
+    return new Promise((resolve) => {
+        const socket = new net.Socket();
+        const timer = setTimeout(() => {
+            socket.destroy();
+            resolve(`Timeout (${timeout}ms)`);
+        }, timeout);
+
+        socket.on('connect', () => {
+            clearTimeout(timer);
+            socket.destroy();
+            resolve('Connected');
+        });
+
+        socket.on('error', (err) => {
+            clearTimeout(timer);
+            resolve(`Error: ${err.message}`);
+        });
+
+        socket.connect(port, host);
+    });
+};
 
 router.get('/email', async (req, res) => {
     const targetEmail = req.query.to as string;
@@ -19,6 +42,12 @@ router.get('/email', async (req, res) => {
     };
 
     try {
+        // 0. Raw Network Checks
+        const tcp587 = await checkConnection('smtp.gmail.com', 587);
+        results.checks.push({ step: 'TCP Connect Port 587', status: tcp587 === 'Connected' ? 'OK' : 'FAILED', error: tcp587 });
+
+        const tcp465 = await checkConnection('smtp.gmail.com', 465);
+        results.checks.push({ step: 'TCP Connect Port 465', status: tcp465 === 'Connected' ? 'OK' : 'FAILED', error: tcp465 });
         // 1. Verify connection configuration
         try {
             const transporter = await getTransporter();
