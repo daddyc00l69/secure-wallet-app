@@ -204,7 +204,7 @@ export const HelpPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex justify-center">
-            <div className="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col">
+            <div className="w-full max-w-md md:max-w-3xl lg:max-w-4xl bg-white min-h-screen shadow-2xl relative flex flex-col">
                 {/* Header */}
                 <div className="px-6 pt-8 pb-6 bg-white border-b border-gray-100 sticky top-0 z-10">
                     <div className="flex items-center gap-4 mb-6">
