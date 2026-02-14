@@ -112,4 +112,92 @@ router.post('/:id/reply', auth, async (req: AuthRequest, res: Response) => {
     }
 });
 
+// Multer Setup
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|pdf/;
+        const mimetype = filetypes.test(file.mimetype);
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        cb(new Error('Only images and PDFs are allowed'));
+    }
+});
+
+// Upload Attachment Endpoint
+router.post('/:id/upload', auth, upload.single('file'), async (req: AuthRequest, res: Response) => {
+    try {
+        const ticket = await SupportTicket.findById(req.params.id);
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        if (ticket.user.toString() !== req.user?.user?.id) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        if (!ticket.allowAttachments) {
+            return res.status(403).json({ message: 'Uploads are not allowed for this ticket.' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const newAttachment = {
+            originalName: req.file.originalname,
+            filename: req.file.filename,
+            path: req.file.path,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            uploadedAt: new Date()
+        };
+
+        ticket.attachments.push(newAttachment);
+
+        // Add a system message about the upload
+        ticket.messages.push({
+            sender: 'user',
+            message: `[Attachment Uploaded: ${req.file.originalname}]`,
+            timestamp: new Date()
+        });
+
+        ticket.lastMessageAt = new Date();
+        ticket.lastMessageSender = 'user';
+
+        if (ticket.status === 'closed') {
+            ticket.status = 'open';
+            ticket.closedAt = undefined;
+        }
+
+        await ticket.save();
+        res.json(ticket);
+
+    } catch (err) {
+        console.error((err as Error).message);
+        res.status(500).send('Server error');
+    }
+});
+
 export default router;
