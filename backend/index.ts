@@ -183,7 +183,7 @@ app.delete('/api/addresses/:id', auth, async (req: AuthRequest, res) => {
     }
 });
 
-// Verify PIN endpoint
+// Verify PIN endpoint (Card PIN)
 app.post('/api/cards/:id/verify-pin', auth, async (req: AuthRequest, res) => {
     try {
         const { pin } = req.body;
@@ -200,6 +200,52 @@ app.post('/api/cards/:id/verify-pin', auth, async (req: AuthRequest, res) => {
         }
     } catch (err) {
         res.status(500).json({ message: (err as Error).message });
+    }
+});
+
+// Reveal Card Details (Protected by App Lock PIN)
+app.post('/api/cards/:id/reveal', auth, async (req: AuthRequest, res) => {
+    try {
+        const { pin } = req.body; // App Lock PIN
+        const user = await import('./models/User').then(m => m.default.findById(req.user.user.id));
+
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        // Verify App PIN
+        const bcrypt = await import('bcryptjs');
+        if (!user.appLockPin) {
+            res.status(400).json({ message: 'App PIN not set' });
+            return;
+        }
+        const isMatch = await bcrypt.compare(pin, user.appLockPin);
+
+        if (!isMatch) {
+            res.status(401).json({ message: 'Invalid App PIN' });
+            return;
+        }
+
+        const card = await Card.findOne({ _id: req.params.id, user: req.user.user.id });
+        if (!card) {
+            res.status(404).json({ message: 'Card not found' });
+            return;
+        }
+
+        // Decrypt and return sensitive data
+        // Explicitly cast to any or use interface method if TS allows
+        const decryptedNumber = (card as any).getDecryptedNumber ? (card as any).getDecryptedNumber() : card.number;
+        const decryptedCvv = (card as any).getDecryptedCvv ? (card as any).getDecryptedCvv() : card.cvv;
+
+        res.json({
+            number: decryptedNumber,
+            cvv: decryptedCvv
+        });
+
+    } catch (err) {
+        console.error('Reveal error:', err);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
