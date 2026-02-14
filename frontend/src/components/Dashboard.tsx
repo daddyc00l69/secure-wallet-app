@@ -36,6 +36,7 @@ export function Dashboard() {
     const [selectedCardForPin, setSelectedCardForPin] = useState<ICard | null>(null);
     const [revealedCvvCardId, setRevealedCvvCardId] = useState<string | null>(null);
     const [revealedNumberCardId, setRevealedNumberCardId] = useState<string | null>(null);
+    const [revealedCards, setRevealedCards] = useState<Record<string, { number?: string; cvv?: string }>>({});
     const [pinRequestType, setPinRequestType] = useState<'cvv' | 'number'>('cvv');
 
     const { user } = useAuth();
@@ -136,18 +137,42 @@ export function Dashboard() {
         setPinModalOpen(true);
     };
 
-    const handlePinSuccess = () => {
-        if (selectedCardForPin && selectedCardForPin._id) {
+    const verifyPinAndReveal = async (pin: string) => {
+        if (!selectedCardForPin || !selectedCardForPin._id) return;
+        const cardId = selectedCardForPin._id;
+
+        try {
+            // Use standard token retrieval
+            const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+
+            const res = await axios.post(`${API_URL}/cards/${cardId}/reveal`, { pin }, { headers });
+            const { number, cvv } = res.data;
+
+            setRevealedCards(prev => ({ ...prev, [cardId]: { number, cvv } }));
+
+            // Update visibility state
             if (pinRequestType === 'cvv') {
-                setRevealedCvvCardId(selectedCardForPin._id);
-                setTimeout(() => setRevealedCvvCardId(null), 10000); // 10s timeout
+                setRevealedCvvCardId(cardId);
+                setTimeout(() => setRevealedCvvCardId(null), 10000);
             } else {
-                setRevealedNumberCardId(selectedCardForPin._id);
-                setTimeout(() => setRevealedNumberCardId(null), 10000); // 10s timeout
+                setRevealedNumberCardId(cardId);
+                setTimeout(() => setRevealedNumberCardId(null), 10000);
             }
+
+            // Clear sensitive data after 10s
+            setTimeout(() => {
+                setRevealedCards(prev => {
+                    const next = { ...prev };
+                    delete next[cardId];
+                    return next;
+                });
+            }, 10000);
 
             setPinModalOpen(false);
             setSelectedCardForPin(null);
+        } catch (err) {
+            console.error(err);
+            throw err; // Propagate to PinModal
         }
     };
 
@@ -264,6 +289,7 @@ export function Dashboard() {
                                 cards={filteredCards}
                                 revealedCardId={revealedCvvCardId}
                                 revealedNumberCardId={revealedNumberCardId}
+                                revealedCardsMap={revealedCards}
                                 onViewCvv={handleViewCvv}
                                 onViewNumber={handleViewNumber}
                             />
@@ -351,8 +377,7 @@ export function Dashboard() {
                     setPinModalOpen(false);
                     setSelectedCardForPin(null);
                 }}
-                onSuccess={handlePinSuccess}
-                cardPin={selectedCardForPin?.pin}
+                onSubmit={verifyPinAndReveal}
             />
         </div >
     );
