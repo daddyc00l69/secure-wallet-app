@@ -22,6 +22,8 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
     unlockApp: () => void;
     lockApp: () => void;
+    editToken: string | null;
+    setEditToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,9 +35,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Default locked if token exists (will be verified against hasPin later)
     const [isAppLocked, setIsAppLocked] = useState(!!localStorage.getItem('token'));
 
+    const [editToken, setEditToken] = useState<string | null>(null);
+
     const fetchUser = useCallback(async (currentToken: string) => {
         try {
             axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+            // If editToken exists, add it to headers
+            // We need to do this carefully not to lose it on refresh if we don't persist it.
+            // For now, let's just set it if state has it.
+            // Actually, we should check if we persist it? The plan said URL param.
+            // So the Dashboard will call setEditToken.
             const res = await axios.get(`${API_URL}/auth/me`);
             setUser(res.data);
             // If user has no PIN, ensure app is unlocked
@@ -53,6 +62,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(false);
         }
     }, []);
+
+    // Effect to update headers when editToken changes
+    useEffect(() => {
+        if (editToken) {
+            axios.defaults.headers.common['x-access-token'] = editToken;
+        } else {
+            delete axios.defaults.headers.common['x-access-token'];
+        }
+    }, [editToken]);
 
     useEffect(() => {
         if (token) {
@@ -74,8 +92,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = () => {
         localStorage.removeItem('token');
         setToken(null);
+        setEditToken(null);
         setUser(null);
         delete axios.defaults.headers.common['Authorization'];
+        delete axios.defaults.headers.common['x-access-token'];
         setIsAppLocked(false);
     };
 
@@ -97,7 +117,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAppLocked,
             refreshUser,
             unlockApp,
-            lockApp
+            lockApp,
+            editToken,
+            setEditToken
         }}>
             {children}
         </AuthContext.Provider>
