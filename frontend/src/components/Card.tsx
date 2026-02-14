@@ -63,7 +63,8 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
                 {/* Front */}
                 <div className={clsx(
                     "card-front absolute w-full h-full backface-hidden rounded-2xl p-6 shadow-2xl text-white flex flex-col justify-between overflow-hidden border border-white/20",
-                    !card.image && card.theme
+                    !card.image && card.theme,
+                    card.category === 'identity' && "bg-gradient-to-r from-orange-100 to-orange-50 text-black border-orange-200" // Simple default if no theme
                 )}>
                     {card.image && (
                         <div className="absolute inset-0 z-0">
@@ -72,11 +73,12 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
                                 alt="Card Background"
                                 className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/20" /> {/* Dim overlay for text readability */}
+                            {/* Less dimming for identity to keep it clean, or specific overlay */}
+                            {card.category !== 'identity' && <div className="absolute inset-0 bg-black/20" />}
                         </div>
                     )}
 
-                    {!card.image && (
+                    {!card.image && card.category !== 'identity' && (
                         <>
                             {/* Design Elements */}
                             <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px] z-0" />
@@ -91,7 +93,8 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
                     {/* Actually, let's put it top left, push shield/wifi to right? */}
                     {/* Let's stick to the current layout but maybe add Bank Name above the chip or top right. */}
 
-                    {card.bank && !card.image && (
+                    {/* Bank Name - Only for non-identity cards */}
+                    {card.bank && !card.image && card.category !== 'identity' && (
                         <div className="absolute top-6 right-6 z-10">
                             <p className="font-bold text-lg tracking-wider opacity-90 text-right">{card.bank.toUpperCase()}</p>
                         </div>
@@ -110,10 +113,13 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
 
                     {/* Identity Header */}
                     {!card.image && card.category === 'identity' && (
-                        <div className="relative z-10 flex justify-center items-center mt-2">
-                            <div className="flex flex-col items-center">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" className="h-8 w-auto invert opacity-90 mb-1" />
-                                <span className="text-[10px] uppercase tracking-widest opacity-90 font-bold">Government of India</span>
+                        <div className="relative z-10 flex justify-center items-center mt-4">
+                            <div className="flex flex-col items-center text-black">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" className="h-10 w-auto mb-2" />
+                                <span className="text-[10px] uppercase tracking-widest font-bold">
+                                    {card.type === 'passport' ? 'Republic of India' : 'Government of India'}
+                                </span>
+                                {card.type === 'aadhaar' && <span className="text-[8px] font-semibold text-gray-600">UIDAI</span>}
                             </div>
                         </div>
                     )}
@@ -130,11 +136,12 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
 
 
                     {/* Number */}
-                    <div className="relative z-10 mt-14 flex items-center group/number max-w-full">
+                    <div className="relative z-10 mt-6 flex items-center group/number max-w-full justify-center">
                         <p className={clsx(
-                            "font-mono tracking-wider drop-shadow-lg whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300",
-                            "text-lg", // Smaller font size generally
-                            !showNumber && "opacity-60 tracking-widest" // Dimmed and wider tracking when masked for effect
+                            "font-mono tracking-wider drop-shadow-sm whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-300",
+                            "text-lg",
+                            !showNumber && "opacity-60 tracking-widest",
+                            card.category === 'identity' ? "text-black font-bold" : "text-white"
                         )} style={{ fontFamily: 'monospace' }}>
                             {showNumber ? formatNumber(card.number) : maskNumber(card.number)}
                         </p>
