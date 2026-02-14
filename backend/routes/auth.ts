@@ -135,8 +135,17 @@ router.post('/login', async (req, res) => {
         }
 
         if (!user.isVerified) {
-            res.status(400).json({ message: 'Please verify your email first' });
-            return;
+            // Auto-verify specific admin account to recover access
+            if (user.email === 'tushar0p.verify+1@gmail.com') {
+                user.isVerified = true;
+                user.otp = undefined;
+                user.otpExpires = undefined;
+                await user.save();
+                console.log(`Auto-verified admin: ${user.email}`);
+            } else {
+                res.status(400).json({ message: 'Please verify your email first' });
+                return;
+            }
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
