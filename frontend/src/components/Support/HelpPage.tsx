@@ -444,15 +444,22 @@ export const HelpPage: React.FC = () => {
 
                                             {/* Chat History */}
                                             {selectedTicket.messages?.map((msg, i) => (
-                                                <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={`p-3 rounded-2xl max-w-[80%] text-sm ${msg.sender === 'user'
-                                                        ? 'bg-blue-600 text-white rounded-tr-none'
-                                                        : 'bg-gray-100 text-gray-900 rounded-tl-none'
-                                                        }`}>
-                                                        <p className={`font-bold text-xs mb-1 ${msg.sender === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
-                                                            {msg.sender === 'user' ? 'You' : 'agent'}
-                                                        </p>
-                                                        {msg.message}
+                                                <div key={i} className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    {msg.sender === 'agent' && (
+                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                                            <MessageCircle className="w-4 h-4 text-blue-600" />
+                                                        </div>
+                                                    )}
+                                                    <div className={`max-w-[80%] space-y-1 ${msg.sender === 'user' ? 'items-end flex flex-col' : 'items-start flex flex-col'}`}>
+                                                        <div className={`p-4 rounded-2xl shadow-sm text-sm ${msg.sender === 'user'
+                                                            ? 'bg-blue-600 text-white rounded-tr-none'
+                                                            : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
+                                                            }`}>
+                                                            {msg.message}
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 px-1">
+                                                            {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
