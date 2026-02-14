@@ -12,6 +12,15 @@ export interface ISupportTicket extends Document {
     lastMessageAt: Date;
     lastMessageSender: 'user' | 'agent';
     createdAt: Date;
+    allowAttachments: boolean;
+    attachments: {
+        originalName: string;
+        filename: string;
+        path: string;
+        mimetype: string;
+        size: number;
+        uploadedAt: Date;
+    }[];
 }
 
 const SupportTicketSchema: Schema = new Schema({
@@ -62,7 +71,19 @@ const SupportTicketSchema: Schema = new Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    allowAttachments: {
+        type: Boolean,
+        default: false
+    },
+    attachments: [{
+        originalName: String,
+        filename: String,
+        path: String,
+        mimetype: String,
+        size: Number,
+        uploadedAt: { type: Date, default: Date.now }
+    }]
 });
 
 export default mongoose.model<ISupportTicket>('SupportTicket', SupportTicketSchema);
