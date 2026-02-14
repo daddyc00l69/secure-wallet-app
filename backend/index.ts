@@ -19,7 +19,10 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors()); // Allow all for now, Render will provide the frontend URL later
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: true
+}));
 app.use(express.json());
 
 // Auth Routes
