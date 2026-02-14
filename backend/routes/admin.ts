@@ -171,4 +171,27 @@ router.put('/users/:id/role', auth, authorize(['admin']), async (req: AuthReques
 });
 
 
+// Update User Permissions (Admin only)
+router.put('/users/:id/permissions', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+    try {
+        const { canScreenshot } = req.body;
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        if (typeof canScreenshot === 'boolean') {
+            user.canScreenshot = canScreenshot;
+        }
+
+        await user.save();
+        res.json({ message: 'User permissions updated successfully', user });
+    } catch (err) {
+        console.error((err as Error).message);
+        res.status(500).send('Server error');
+    }
+});
+
 export default router;
