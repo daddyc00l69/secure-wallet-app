@@ -1,5 +1,6 @@
 import express from 'express';
 import net from 'net';
+import axios from 'axios';
 import { getTransporter } from '../utils/email';
 
 const router = express.Router();
@@ -42,6 +43,14 @@ router.get('/email', async (req, res) => {
     };
 
     try {
+        // -1. Check General Internet Access (HTTP)
+        try {
+            await axios.get('https://www.google.com', { timeout: 5000 });
+            results.checks.push({ step: 'Internet Access (HTTP)', status: 'OK' });
+        } catch (error) {
+            results.checks.push({ step: 'Internet Access (HTTP)', status: 'FAILED', error: (error as Error).message });
+        }
+
         // 0. Raw Network Checks
         const tcp587 = await checkConnection('smtp.gmail.com', 587);
         results.checks.push({ step: 'TCP Connect Port 587', status: tcp587 === 'Connected' ? 'OK' : 'FAILED', error: tcp587 });
