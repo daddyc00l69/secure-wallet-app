@@ -4,22 +4,54 @@ import { auth, authorize, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
-// Get All Tickets (Manager & Admin)
+// Get Tickets (Manager & Admin)
 router.get('/tickets', auth, authorize(['manager', 'admin']), async (req: AuthRequest, res: Response) => {
     try {
         // Auto-delete tickets closed > 24h ago
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         await SupportTicket.deleteMany({ status: 'closed', closedAt: { $lt: twentyFourHoursAgo } });
 
-        const tickets = await SupportTicket.find({
+        let query: any = {
             $or: [
                 { status: { $ne: 'closed' } }, // Open or In Progress
                 { status: 'closed' } // All remaining closed tickets are valid (< 24h)
             ]
-        })
+        };
+
+        // If user is a manager, ONLY show tickets assigned to them
+        if (req.user?.role === 'manager') {
+            query.assignedTo = req.user.userId;
+        }
+
+        const tickets = await SupportTicket.find(query)
             .populate('user', 'username email')
+            .populate('assignedTo', 'username')
             .sort({ createdAt: -1 });
         res.json(tickets);
+    } catch (err) {
+        console.error((err as Error).message);
+        res.status(500).send('Server error');
+    }
+});
+
+// Assign Ticket (Admin only)
+router.put('/tickets/:id/assign', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+    try {
+        const { managerId } = req.body;
+        const ticket = await SupportTicket.findById(req.params.id);
+        if (!ticket) {
+            res.status(404).json({ message: 'Ticket not found' });
+            return;
+        }
+
+        ticket.assignedTo = managerId;
+        await ticket.save();
+
+        const updatedTicket = await SupportTicket.findById(req.params.id)
+            .populate('user', 'username email')
+            .populate('assignedTo', 'username');
+
+        res.json(updatedTicket);
     } catch (err) {
         console.error((err as Error).message);
         res.status(500).send('Server error');
