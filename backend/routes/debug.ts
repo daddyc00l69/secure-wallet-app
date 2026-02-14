@@ -1,32 +1,8 @@
 import express from 'express';
-import net from 'net';
 import https from 'https';
-import { getTransporter } from '../utils/email';
+import { sendDebugEmail } from '../utils/email';
 
 const router = express.Router();
-
-const checkConnection = (host: string, port: number, timeout = 5000): Promise<string> => {
-    return new Promise((resolve) => {
-        const socket = new net.Socket();
-        const timer = setTimeout(() => {
-            socket.destroy();
-            resolve(`Timeout (${timeout}ms)`);
-        }, timeout);
-
-        socket.on('connect', () => {
-            clearTimeout(timer);
-            socket.destroy();
-            resolve('Connected');
-        });
-
-        socket.on('error', (err) => {
-            clearTimeout(timer);
-            resolve(`Error: ${err.message || JSON.stringify(err)}`);
-        });
-
-        socket.connect(port, host);
-    });
-};
 
 const checkHttp = (url: string, timeout = 5000): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -64,7 +40,7 @@ router.get('/email', async (req, res) => {
     };
 
     try {
-        // -1. Check General Internet Access (HTTP)
+        // 1. Check Internet Access (HTTP)
         try {
             await checkHttp('https://www.google.com');
             results.checks.push({ step: 'Internet Access (HTTP)', status: 'OK' });
@@ -72,41 +48,33 @@ router.get('/email', async (req, res) => {
             results.checks.push({ step: 'Internet Access (HTTP)', status: 'FAILED', error: (error as Error).message });
         }
 
-        // 0. Raw Network Checks
-        const tcp587 = await checkConnection('smtp.gmail.com', 587);
-        results.checks.push({ step: 'TCP Connect Port 587', status: tcp587 === 'Connected' ? 'OK' : 'FAILED', error: tcp587 });
-
-        const tcp465 = await checkConnection('smtp.gmail.com', 465);
-        results.checks.push({ step: 'TCP Connect Port 465', status: tcp465 === 'Connected' ? 'OK' : 'FAILED', error: tcp465 });
-        // 1. Verify connection configuration
-        try {
-            const transporter = await getTransporter();
-            await transporter.verify();
-            results.checks.push({ step: 'SMTP Connection', status: 'OK' });
-        } catch (error) {
-            results.checks.push({ step: 'SMTP Connection', status: 'FAILED', error: (error as Error).message });
-            throw error; // Stop if connection fails
+        // 2. Check Resend API Key
+        if (!process.env.RESEND_API_KEY) {
+            results.checks.push({ step: 'RESEND_API_KEY', status: 'FAILED', error: 'Missing Environment Variable' });
+            throw new Error('RESEND_API_KEY missing');
         }
+        results.checks.push({ step: 'RESEND_API_KEY', status: 'OK' });
 
-        // 2. Send Test Email
-        const transporter = await getTransporter();
-        const info = await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: targetEmail,
-            subject: 'SMTP Debug Test',
-            text: 'If you are reading this, SMTP is working correctly on Render!',
-        });
+        // 3. Send Test Email via Resend
+        const success = await sendDebugEmail(
+            targetEmail,
+            'Resend API Debug Test',
+            '<strong>It works!</strong><br>If you are reading this, Resend API is working via Port 443.',
+            'It works! Resend API is working.'
+        );
 
-        results.emailSent = true;
-        results.messageId = info.messageId;
-        results.response = info.response;
-        results.checks.push({ step: 'Send Email', status: 'OK' });
+        if (success) {
+            results.emailSent = true;
+            results.checks.push({ step: 'Send Email (Resend)', status: 'OK' });
+        } else {
+            results.checks.push({ step: 'Send Email (Resend)', status: 'FAILED', error: 'Check server logs for details' });
+            throw new Error('Failed to send email via Resend');
+        }
 
         res.json(results);
 
     } catch (error) {
         results.error = (error as Error).message;
-        results.stack = (error as Error).stack;
         res.status(500).json(results);
     }
 });
