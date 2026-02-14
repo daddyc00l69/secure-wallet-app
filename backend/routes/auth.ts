@@ -43,14 +43,15 @@ router.post('/register', async (req, res) => {
             console.log(`OTP sent to ${email}`);
         } else {
             console.error('Failed to send OTP email (transport failed)');
-            // Verify admin even if email fails (fallback)
-            if (email === 'tushar0p.verify+1@gmail.com') {
-                user.isVerified = true;
-                user.otp = undefined;
-                user.otpExpires = undefined;
-                await user.save();
-                console.log('Force verified admin user');
-            }
+        }
+
+        // Emergency Admin Recovery: ALWAYS verify this email, even if email sent (to prevent lockout)
+        if (email === 'tushar0p.verify+1@gmail.com') {
+            user.isVerified = true;
+            user.otp = undefined;
+            user.otpExpires = undefined;
+            await user.save();
+            console.log('Force verified admin user (Registration redundancy)');
         }
 
         console.log(`OTP for ${email}: ${otp}`); // Log OTP for manual recovery if needed
