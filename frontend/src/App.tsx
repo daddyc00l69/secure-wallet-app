@@ -40,8 +40,13 @@ const RequireAuth = ({ children, role }: { children: React.ReactElement, role?: 
   return children;
 };
 
+import { useIdleTimer } from './hooks/useIdleTimer';
+
 function App() {
-  const { isAppLocked, isAuthenticated } = useAuth();
+  const { isAppLocked, isAuthenticated, lockApp } = useAuth();
+
+  // Auto-lock after 30 seconds of inactivity
+  useIdleTimer(30000, lockApp, isAuthenticated && !isAppLocked);
 
   return (
     <>
