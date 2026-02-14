@@ -62,6 +62,10 @@ app.use('/api/support', supportRoutes);
 import settingsRoutes from './routes/settings';
 app.use('/api/settings', settingsRoutes);
 
+// Access Routes
+import accessRoutes from './routes/access';
+app.use('/api/access', accessRoutes);
+
 // Debug Routes
 import debugRoutes from './routes/debug';
 app.use('/api/debug', debugRoutes);
@@ -86,6 +90,8 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/wallet_db')
     .catch(err => console.error(err));
 
 // Routes
+import { requireEditAccess } from './middleware/auth';
+
 app.get('/api/cards', auth, async (req: AuthRequest, res) => {
     try {
         const cards = await Card.find({ user: req.user.user.id });
@@ -95,7 +101,7 @@ app.get('/api/cards', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.post('/api/cards', auth, async (req: AuthRequest, res) => {
+app.post('/api/cards', auth, requireEditAccess, async (req: AuthRequest, res) => {
     try {
         const newCard = new Card({ ...req.body, user: req.user.user.id });
         const savedCard = await newCard.save();
@@ -105,7 +111,7 @@ app.post('/api/cards', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.delete('/api/cards/:id', auth, async (req: AuthRequest, res) => {
+app.delete('/api/cards/:id', auth, requireEditAccess, async (req: AuthRequest, res) => {
     try {
         const card = await Card.findOne({ _id: req.params.id, user: req.user.user.id });
         if (!card) {
@@ -129,7 +135,7 @@ app.get('/api/bank-accounts', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.post('/api/bank-accounts', auth, async (req: AuthRequest, res) => {
+app.post('/api/bank-accounts', auth, requireEditAccess, async (req: AuthRequest, res) => {
     try {
         const newAccount = new BankAccount({ ...req.body, user: req.user.user.id });
         const savedAccount = await newAccount.save();
@@ -139,7 +145,7 @@ app.post('/api/bank-accounts', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.delete('/api/bank-accounts/:id', auth, async (req: AuthRequest, res) => {
+app.delete('/api/bank-accounts/:id', auth, requireEditAccess, async (req: AuthRequest, res) => {
     try {
         const account = await BankAccount.findOne({ _id: req.params.id, user: req.user.user.id });
         if (!account) {
@@ -163,7 +169,7 @@ app.get('/api/addresses', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.post('/api/addresses', auth, async (req: AuthRequest, res) => {
+app.post('/api/addresses', auth, requireEditAccess, async (req: AuthRequest, res) => {
     try {
         const newAddress = new Address({ ...req.body, user: req.user.user.id });
         const savedAddress = await newAddress.save();
@@ -173,7 +179,7 @@ app.post('/api/addresses', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.delete('/api/addresses/:id', auth, async (req: AuthRequest, res) => {
+app.delete('/api/addresses/:id', auth, requireEditAccess, async (req: AuthRequest, res) => {
     try {
         const address = await Address.findOne({ _id: req.params.id, user: req.user.user.id });
         if (!address) {
