@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
-import { Users, Ticket, UserPlus, Shield, Loader2, Search, Download, Settings, Eye, Lock, EyeOff, Save } from 'lucide-react';
+import { Users, Ticket, UserPlus, CheckCircle, XCircle, Eye, Settings, Shield, Download, Search, Lock, MonitorCheck, MonitorX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Stats {
@@ -354,7 +354,28 @@ export const AdminDashboard: React.FC = () => {
                                                     {user.role}
                                                 </span>
                                             </td>
-                                            <td className="py-3 text-right">
+                                            <td className="py-3 text-right flex justify-end gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            const token = localStorage.getItem('token');
+                                                            const newValue = !user.canScreenshot;
+                                                            await axios.put(`${API_URL}/admin/users/${user._id}/permissions`,
+                                                                { canScreenshot: newValue },
+                                                                { headers: { Authorization: `Bearer ${token}` } }
+                                                            );
+                                                            // Optimistic update or refetch
+                                                            setAllUsers(prev => prev.map(u => u._id === user._id ? { ...u, canScreenshot: newValue } : u));
+                                                        } catch (err) {
+                                                            alert('Failed to update permission');
+                                                        }
+                                                    }}
+                                                    className={`p-1.5 rounded-lg text-xs font-bold border ${user.canScreenshot ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                                                    title={user.canScreenshot ? "Screenshots Allowed" : "Screenshots Blocked"}
+                                                >
+                                                    {user.canScreenshot ? <MonitorCheck className="w-4 h-4" /> : <MonitorX className="w-4 h-4" />}
+                                                </button>
+
                                                 {user.role === 'manager' && (
                                                     <button onClick={() => handleUpdateRole(user._id, 'user')} className="text-xs text-red-400 hover:underline">
                                                         Demote
