@@ -45,6 +45,10 @@ const UserSchema = new mongoose.Schema({
     },
     encryptedData: {
         type: String
+    },
+    canScreenshot: {
+        type: Boolean,
+        default: false
     }
 });
 
