@@ -11,7 +11,7 @@ import { AddressCard } from './AddressCard';
 import { AddBankAccountForm } from './AddBankAccountForm';
 import { AddAddressForm } from './AddAddressForm';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_URL } from '../config';
 
 const CARDS_URL = `${API_URL}/cards`;
@@ -39,8 +39,29 @@ export function Dashboard() {
     const [revealedCards, setRevealedCards] = useState<Record<string, { number?: string; cvv?: string }>>({});
     const [pinRequestType, setPinRequestType] = useState<'cvv' | 'number'>('cvv');
 
-    const { user } = useAuth();
+    const { user, setEditToken, editToken } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    // Verification Logic for One-Time Access
+    useEffect(() => {
+        const token = searchParams.get('token');
+        if (token) {
+            axios.post(`${API_URL}/access/verify`, { token })
+                .then(res => {
+                    if (res.data.valid) {
+                        setEditToken(token);
+                        // Clean URL without reload
+                        window.history.replaceState({}, '', window.location.pathname);
+                    }
+                })
+                .catch(err => {
+                    console.error('Invalid access token');
+                });
+        }
+    }, [searchParams, setEditToken]);
+
+    const canEdit = ['admin', 'manager'].includes(user?.role || '') || !!editToken;
 
     const fetchAllData = async () => {
         try {
@@ -108,6 +129,11 @@ export function Dashboard() {
     };
 
     const openAddModal = () => {
+        if (!canEdit) {
+            alert("Restricted Action: Please request 'Edit Access' from support via Ticket.");
+            return;
+        }
+
         if (activeTab === 'bank') {
             setIsAddBankModalOpen(true);
         } else if (activeTab === 'address') {
@@ -188,6 +214,11 @@ export function Dashboard() {
                     <p className="text-gray-500 mt-1">
                         Welcome, {user?.username || 'User'}
                     </p>
+                    {editToken && (
+                        <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full animate-pulse">
+                            Wait-Listed Edit Access Active
+                        </span>
+                    )}
                 </div>
                 <div className="flex gap-4">
                     <button
@@ -200,13 +231,28 @@ export function Dashboard() {
                         </div>
                         <span className="font-medium text-sm hidden sm:block">{user?.username}</span>
                     </button>
-                    <button
-                        onClick={openAddModal}
-                        className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span className="hidden sm:inline">Add New</span>
-                    </button>
+                    {canEdit ? (
+                        <button
+                            onClick={openAddModal}
+                            className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span className="hidden sm:inline">Add New</span>
+                        </button>
+                    ) : (
+                        <div className="group relative">
+                            <button
+                                disabled
+                                className="flex items-center gap-2 bg-gray-300 text-gray-500 px-6 py-3 rounded-2xl font-semibold cursor-not-allowed"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span className="hidden sm:inline">Add New</span>
+                            </button>
+                            <div className="absolute top-full mt-2 w-48 p-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                                Request Edit Access via Support to add new items.
+                            </div>
+                        </div>
+                    )}
                 </div>
             </motion.div>
 
