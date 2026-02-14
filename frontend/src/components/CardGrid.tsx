@@ -7,11 +7,12 @@ interface CardGridProps {
     cards: ICard[];
     revealedCardId?: string | null;
     revealedNumberCardId?: string | null;
+    revealedCardsMap?: Record<string, { number?: string; cvv?: string }>;
     onViewCvv?: (card: ICard) => void;
     onViewNumber?: (card: ICard) => void;
 }
 
-export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revealedNumberCardId, onViewCvv, onViewNumber }) => {
+export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revealedNumberCardId, revealedCardsMap = {}, onViewCvv, onViewNumber }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-8 justify-items-center w-full max-w-7xl mx-auto">
             {cards.map((card, index) => (
@@ -26,6 +27,8 @@ export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revea
                         card={card}
                         showCvv={revealedCardId === card._id}
                         showNumber={revealedNumberCardId === card._id}
+                        revealedNumber={revealedCardsMap[card._id]?.number}
+                        revealedCvv={revealedCardsMap[card._id]?.cvv}
                         onViewCvv={() => onViewCvv && onViewCvv(card)}
                         onViewNumber={() => onViewNumber && onViewNumber(card)}
                     />
