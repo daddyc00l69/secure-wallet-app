@@ -34,6 +34,7 @@ export const getTransporter = async () => {
             servername: 'smtp.gmail.com' // proper SNI for IP connection
             // REJECT_UNAUTHORIZED: true // Optional: keep true for security
         },
+        localAddress: '0.0.0.0', // Force binding to IPv4 interface
         connectionTimeout: 20000,
         greetingTimeout: 20000,
         socketTimeout: 20000
