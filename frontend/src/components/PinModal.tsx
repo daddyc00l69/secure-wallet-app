@@ -1,29 +1,30 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock } from 'lucide-react';
+import { X, Lock, Loader2 } from 'lucide-react';
+import { clsx } from 'clsx';
 
 interface PinModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
-    cardPin?: string; // For client-side mock validation if needed, or we implement API call
+    onSubmit: (pin: string) => Promise<void>;
+    isLoading?: boolean;
+    error?: string | null;
 }
 
-export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, cardPin }) => {
+export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSubmit, isLoading = false, error }) => {
     const [pin, setPin] = useState('');
-    const [error, setError] = useState(false);
+    const [localError, setLocalError] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simple mock validation for now, or match cardPin props
-        if (cardPin && pin === cardPin) {
-            onSuccess();
-            onClose();
+        if (pin.length !== 4) return;
+
+        try {
+            await onSubmit(pin);
             setPin('');
-            setError(false);
-        } else {
-            setError(true);
-            setPin('');
+            setLocalError(false);
+        } catch (err) {
+            setLocalError(true);
         }
     };
 
@@ -68,34 +69,39 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess, 
                                         value={pin}
                                         onChange={(e) => {
                                             setPin(e.target.value.replace(/\D/g, ''));
-                                            setError(false);
+                                            setLocalError(false);
                                         }}
-                                        className={`w-full text-center text-3xl font-mono tracking-[1em] py-3 border-b-2 bg-transparent focus:outline-none transition-colors ${error
+                                        disabled={isLoading}
+                                        className={clsx(
+                                            "w-full text-center text-3xl font-mono tracking-[1em] py-3 border-b-2 bg-transparent focus:outline-none transition-colors",
+                                            (error || localError)
                                                 ? 'border-red-500 text-red-600 placeholder-red-300'
-                                                : 'border-gray-200 focus:border-blue-500 text-gray-900'
-                                            }`}
+                                                : 'border-gray-200 focus:border-blue-500 text-gray-900',
+                                            isLoading && "opacity-50 cursor-not-allowed"
+                                        )}
                                         placeholder="••••"
                                         autoFocus
                                     />
-                                    {error && (
+                                    {(error || localError) && (
                                         <p className="text-red-500 text-sm text-center mt-2">
-                                            Incorrect PIN. Please try again.
+                                            {error || 'Incorrect PIN. Please try again.'}
                                         </p>
                                     )}
                                 </div>
 
                                 <button
                                     type="submit"
-                                    disabled={pin.length !== 4}
-                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={pin.length !== 4 || isLoading}
+                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                                 >
-                                    Verify Access
+                                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {isLoading ? 'Verifying...' : 'Verify Access'}
                                 </button>
                             </form>
                         </div>
                         <div className="bg-gray-50 px-6 py-4 text-center">
                             <p className="text-xs text-gray-500">
-                                Enter your 4-digit security PIN to view CVV details.
+                                Enter your App Lock PIN to reveal confidential details.
                             </p>
                         </div>
                     </motion.div>
