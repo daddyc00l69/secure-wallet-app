@@ -58,6 +58,10 @@ app.use('/api/auth', authRoutes);
 import supportRoutes from './routes/support';
 app.use('/api/support', supportRoutes);
 
+// Settings Routes
+import settingsRoutes from './routes/settings';
+app.use('/api/settings', settingsRoutes);
+
 // Debug Routes
 import debugRoutes from './routes/debug';
 app.use('/api/debug', debugRoutes);
