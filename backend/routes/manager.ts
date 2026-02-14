@@ -79,6 +79,24 @@ router.post('/tickets/:id/close', auth, authorize(['manager', 'admin']), async (
     }
 });
 
+// Toggle File Upload Permission (Manager & Admin)
+router.post('/tickets/:id/toggle-upload', auth, authorize(['manager', 'admin']), async (req: AuthRequest, res: Response) => {
+    try {
+        const ticket = await SupportTicket.findById(req.params.id);
+        if (!ticket) {
+            res.status(404).json({ message: 'Ticket not found' });
+            return;
+        }
+
+        ticket.allowAttachments = !ticket.allowAttachments;
+        await ticket.save();
+        res.json(ticket);
+    } catch (err) {
+        console.error((err as Error).message);
+        res.status(500).send('Server error');
+    }
+});
+
 export default router;
 
 // Escalate Ticket
