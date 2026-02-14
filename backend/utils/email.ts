@@ -24,19 +24,19 @@ export const getTransporter = async () => {
 
     cachedTransporter = nodemailer.createTransport({
         host: host,
-        port: 587,
-        secure: false, // use STARTTLS
+        port: 465,
+        secure: true, // Use SSL
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS?.replace(/\s+/g, '')
         },
         tls: {
-            ciphers: 'SSLv3',
+            // ciphers: 'SSLv3', // sometimes causes issues with modern SSL
             servername: 'smtp.gmail.com' // proper SNI for IP connection
         },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000
+        connectionTimeout: 20000, // Increased timeout
+        greetingTimeout: 20000,
+        socketTimeout: 20000
     } as any);
 
     return cachedTransporter;
