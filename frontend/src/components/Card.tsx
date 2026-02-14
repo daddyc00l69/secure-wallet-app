@@ -9,6 +9,8 @@ interface CardProps {
     onFlip?: () => void;
     showCvv?: boolean;
     showNumber?: boolean;
+    revealedNumber?: string;
+    revealedCvv?: string;
     onViewCvv?: () => void;
     onViewNumber?: () => void;
 }
@@ -38,7 +40,7 @@ const maskNumber = (num: string) => {
     return `**** **** ${num.slice(-4)}`;
 };
 
-export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showNumber = false, onViewCvv, onViewNumber }) => {
+export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showNumber = false, revealedNumber, revealedCvv, onViewCvv, onViewNumber }) => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [copied, setCopied] = useState(false);
 
@@ -143,7 +145,7 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
                             !showNumber && "opacity-60 tracking-widest",
                             card.category === 'identity' ? "text-black font-bold" : "text-white"
                         )} style={{ fontFamily: 'monospace' }}>
-                            {showNumber ? formatNumber(card.number) : maskNumber(card.number)}
+                            {showNumber ? formatNumber(revealedNumber || card.number) : maskNumber(card.number)}
                         </p>
                         <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                             {!showNumber && (
@@ -210,7 +212,7 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
                         <div className="flex justify-end items-center">
                             <div className="w-full h-10 bg-white/90 rounded flex items-center justify-between px-3">
                                 <p className="text-black font-mono font-bold tracking-widest text-lg">
-                                    {showCvv ? card.cvv : '***'}
+                                    {showCvv ? (revealedCvv || card.cvv) : '***'}
                                 </p>
                                 {!showCvv && (
                                     <button
