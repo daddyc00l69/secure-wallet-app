@@ -12,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 app.get('/', (req, res) => res.send('Server Running'));
+app.get('/healthCheck', (req, res) => res.status(200).json({ status: 'ok', message: 'Server is healthy' }));
 
 app.use((req, res, next) => {
     console.log(`[Global Trace] ${req.method} ${req.url}`);
