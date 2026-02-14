@@ -14,6 +14,8 @@ interface Ticket {
     lastMessageAt?: string;
     lastMessageSender?: 'user' | 'agent';
     createdAt: string;
+    allowAttachments?: boolean;
+    attachments?: { originalName: string, path: string, filename: string }[];
 }
 
 export const HelpPage: React.FC = () => {
@@ -32,6 +34,41 @@ export const HelpPage: React.FC = () => {
     const [error, setError] = useState('');
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [replyMessage, setReplyMessage] = useState('');
+    const [uploadFile, setUploadFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setUploadFile(e.target.files[0]);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedTicket || !uploadFile) return;
+        setUploading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('file', uploadFile);
+
+            const res = await axios.post(`${API_URL}/support/${selectedTicket._id}/upload`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            // Update ticket
+            setSelectedTicket(res.data);
+            setTickets(tickets.map(t => t._id === res.data._id ? res.data : t));
+            setUploadFile(null);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.response?.data?.message || 'Upload failed');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     // ... (faqs) ...
 
@@ -439,26 +476,45 @@ export const HelpPage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <form onSubmit={handleReplyTicket} className="p-4 border-t bg-gray-50 rounded-b-3xl flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={replyMessage}
-                                                onChange={(e) => setReplyMessage(e.target.value)}
-                                                placeholder={
-                                                    selectedTicket.status === 'closed' ? "Ticket is closed" :
-                                                        (selectedTicket.status === 'open' && selectedTicket.lastMessageSender === 'user') ? "Waiting for agent response..." :
-                                                            "Type a reply..."
-                                                }
-                                                className="flex-1 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
-                                                disabled={selectedTicket.status === 'closed' || (selectedTicket.status === 'open' && selectedTicket.lastMessageSender === 'user')}
-                                            />
-                                            <button
-                                                type="submit"
-                                                className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                disabled={!replyMessage.trim() || selectedTicket.status === 'closed' || (selectedTicket.status === 'open' && selectedTicket.lastMessageSender === 'user')}
-                                            >
-                                                Send
-                                            </button>
+                                        <form onSubmit={handleReplyTicket} className="p-4 border-t bg-gray-50 rounded-b-3xl flex flex-col gap-2">
+                                            {selectedTicket.allowAttachments && (
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <label className="cursor-pointer p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                                                        <Plus className="w-5 h-5" />
+                                                        <input type="file" className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf" />
+                                                    </label>
+                                                    {uploadFile && (
+                                                        <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg text-xs text-blue-700">
+                                                            <span>{uploadFile.name}</span>
+                                                            <button type="button" onClick={() => handleUpload()} disabled={uploading} className="font-bold hover:underline">
+                                                                {uploading ? 'Uploading...' : 'Upload'}
+                                                            </button>
+                                                            <button type="button" onClick={() => setUploadFile(null)} className="ml-2 text-gray-400 font-bold">✕</button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={replyMessage}
+                                                    onChange={(e) => setReplyMessage(e.target.value)}
+                                                    placeholder={
+                                                        selectedTicket.status === 'closed' ? "Ticket is closed" :
+                                                            (selectedTicket.status === 'open' && selectedTicket.lastMessageSender === 'user') ? "Waiting for agent response..." :
+                                                                "Type a reply..."
+                                                    }
+                                                    className="flex-1 p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
+                                                    disabled={selectedTicket.status === 'closed' || (selectedTicket.status === 'open' && selectedTicket.lastMessageSender === 'user')}
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    disabled={!replyMessage.trim() || selectedTicket.status === 'closed' || (selectedTicket.status === 'open' && selectedTicket.lastMessageSender === 'user')}
+                                                >
+                                                    Send
+                                                </button>
+                                            </div>
                                         </form>
                                     </div>
                                 </div>
