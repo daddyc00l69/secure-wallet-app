@@ -21,7 +21,12 @@ interface Ticket {
     createdAt: string;
     lastMessageAt?: string;
     lastMessageSender?: 'user' | 'agent';
-    messages?: { sender: string; message: string }[];
+    messages?: {
+        sender: string;
+        message: string;
+        timestamp?: string;
+    }[];
+    assignedTo?: { _id: string, username: string };
 }
 
 export const AdminDashboard: React.FC = () => {
@@ -141,7 +146,7 @@ export const AdminDashboard: React.FC = () => {
             // Get base URL from window location to form full link if backend returns relative
             const fullLink = `${window.location.origin}${link}`;
 
-            await handleReplyTicket(null as any, `You have been granted temporary access to edit your profile and add cards. This link is valid for 15 minutes:\n\n${fullLink}`);
+            await handleReplyTicket(null as any, `You have been granted temporary access to edit your profile and add cards.\n\nThis link is valid for 15 minutes:\n${fullLink}`);
 
             alert('Access granted and link sent to user.');
         } catch (err: any) {
@@ -494,16 +499,19 @@ export const AdminDashboard: React.FC = () => {
                                 <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-white/10 rounded-full">✕</button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[60vh] custom-scrollbar">
                                 <div className="bg-gray-800/50 p-4 rounded-2xl rounded-tl-none border border-white/5">
                                     <p className="text-xs text-gray-400 mb-1 font-bold">Original Request</p>
                                     <p className="text-sm">{selectedTicket.message}</p>
                                 </div>
                                 {selectedTicket.messages?.map((msg, i) => (
                                     <div key={i} className={`flex ${msg.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`p-4 rounded-2xl max-w-[80%] text-sm ${msg.sender === 'agent' ? 'bg-blue-600 rounded-tr-none' : 'bg-gray-800 rounded-tl-none'
+                                        <div className={`p-4 rounded-2xl max-w-[80%] text-sm ${msg.sender === 'agent' ? 'bg-blue-600/90 text-white rounded-tr-none shadow-lg shadow-blue-500/10' : 'bg-gray-800 border border-white/10 text-gray-200 rounded-tl-none'
                                             }`}>
                                             {msg.message}
+                                            <div className={`text-[10px] mt-1 text-right ${msg.sender === 'agent' ? 'text-blue-100' : 'text-gray-500'}`}>
+                                                {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
