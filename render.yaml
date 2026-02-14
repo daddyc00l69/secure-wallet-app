@@ -17,7 +17,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: "https://secure-wallet-7o7k48mmt-tushars-projects-25d04397.vercel.app"
+        value: "https://secure-wallet-7o7k48mmt-tushars-projects-25d04397.vercel.app,https://secure-wallet-app-eight.vercel.app"
 
   # Frontend Static Site
   - type: web
