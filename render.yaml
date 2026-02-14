@@ -18,6 +18,10 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         value: "https://secure-wallet-7o7k48mmt-tushars-projects-25d04397.vercel.app,https://secure-wallet-app-eight.vercel.app"
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
 
   # Frontend Static Site
   - type: web
