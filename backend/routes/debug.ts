@@ -1,6 +1,6 @@
 import express from 'express';
 import net from 'net';
-import axios from 'axios';
+import https from 'https';
 import { getTransporter } from '../utils/email';
 
 const router = express.Router();
@@ -30,7 +30,7 @@ const checkConnection = (host: string, port: number, timeout = 5000): Promise<st
 
 const checkHttp = (url: string, timeout = 5000): Promise<string> => {
     return new Promise((resolve, reject) => {
-        const req = https.get(url, (res) => {
+        const req = https.get(url, (res: any) => {
             if (res.statusCode === 200) {
                 resolve('OK');
             } else {
@@ -38,7 +38,7 @@ const checkHttp = (url: string, timeout = 5000): Promise<string> => {
             }
         });
 
-        req.on('error', (err) => {
+        req.on('error', (err: any) => {
             reject(err);
         });
 
