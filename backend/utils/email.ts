@@ -131,7 +131,7 @@ export const sendManagerInvite = async (email: string, otp: string) => {
             <h1 style="color: #6d28d9; letter-spacing: 5px; font-size: 32px;">${otp}</h1>
             <p>This code will expire in 24 hours.</p>
             <div style="margin: 30px 0;">
-                <a href="http://localhost:5173/manager-setup" style="background-color: #6d28d9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Setup Manager Account</a>
+                <a href="${process.env.APP_URL || 'http://localhost:5173'}/manager-setup" style="background-color: #6d28d9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Setup Manager Account</a>
             </div>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
             <p style="font-size: 12px; color: #666;">
