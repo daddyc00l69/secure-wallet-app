@@ -2,7 +2,8 @@ import express from 'express';
 import crypto from 'crypto';
 import TempAccess from '../models/TempAccess';
 import { auth, authorize } from '../middleware/auth';
-import { API_URL } from '../config'; // Wait, backend config? Usually backend uses env.
+// import { API_URL } from '../config'; 
+
 
 const router = express.Router();
 
