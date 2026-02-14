@@ -22,13 +22,22 @@ app.use((req, res, next) => {
 const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(origin => origin.trim());
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.error(`Blocked by CORS: '${origin}'`); // Changed to error for visibility
-            console.error(`Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
-            callback(new Error('Not allowed by CORS'));
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        // Check against allowed origins list
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+            return callback(null, true);
         }
+
+        // Check if origin matches Vercel subdomain pattern (Automatic allow for all Vercel previews)
+        if (/\.vercel\.app$/.test(origin)) {
+            return callback(null, true);
+        }
+
+        console.error(`Blocked by CORS: '${origin}'`);
+        console.error(`Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
+        callback(new Error('Not allowed by CORS'));
     },
     credentials: true
 }));
