@@ -48,27 +48,27 @@ router.get('/email', async (req, res) => {
             results.checks.push({ step: 'Internet Access (HTTP)', status: 'FAILED', error: (error as Error).message });
         }
 
-        // 2. Check Resend API Key
-        if (!process.env.RESEND_API_KEY) {
-            results.checks.push({ step: 'RESEND_API_KEY', status: 'FAILED', error: 'Missing Environment Variable' });
-            throw new Error('RESEND_API_KEY missing');
+        // 2. Check Brevo API Key
+        if (!process.env.BREVO_API_KEY) {
+            results.checks.push({ step: 'BREVO_API_KEY', status: 'FAILED', error: 'Missing Environment Variable' });
+            throw new Error('BREVO_API_KEY missing');
         }
-        results.checks.push({ step: 'RESEND_API_KEY', status: 'OK' });
+        results.checks.push({ step: 'BREVO_API_KEY', status: 'OK' });
 
-        // 3. Send Test Email via Resend
+        // 3. Send Test Email via Brevo
         const success = await sendDebugEmail(
             targetEmail,
-            'Resend API Debug Test',
-            '<strong>It works!</strong><br>If you are reading this, Resend API is working via Port 443.',
-            'It works! Resend API is working.'
+            'Brevo API Debug Test',
+            '<strong>It works!</strong><br>If you are reading this, Brevo API is working via Port 443.',
+            'It works! Brevo API is working.'
         );
 
         if (success) {
             results.emailSent = true;
-            results.checks.push({ step: 'Send Email (Resend)', status: 'OK' });
+            results.checks.push({ step: 'Send Email (Brevo)', status: 'OK' });
         } else {
-            results.checks.push({ step: 'Send Email (Resend)', status: 'FAILED', error: 'Check server logs for details' });
-            throw new Error('Failed to send email via Resend');
+            results.checks.push({ step: 'Send Email (Brevo)', status: 'FAILED', error: 'Check server logs for details' });
+            throw new Error('Failed to send email via Brevo');
         }
 
         res.json(results);
