@@ -20,7 +20,7 @@ const checkConnection = (host: string, port: number, timeout = 5000): Promise<st
 
         socket.on('error', (err) => {
             clearTimeout(timer);
-            resolve(`Error: ${err.message}`);
+            resolve(`Error: ${err.message || JSON.stringify(err)}`);
         });
 
         socket.connect(port, host);
