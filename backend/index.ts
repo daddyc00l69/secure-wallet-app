@@ -2,6 +2,12 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+// Force IPv4 to avoid Render/Docker IPv6 timeouts
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 import Card from './models/Card';
 import BankAccount from './models/BankAccount';
 import Address from './models/Address';
