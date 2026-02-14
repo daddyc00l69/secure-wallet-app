@@ -40,16 +40,6 @@ export const PrivacyShield: React.FC = () => {
 
     if (canScreenshot) return null;
 
-    // Watermark
-    return (
-        <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden flex flex-wrap opacity-[0.03] select-none">
-            {Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="w-60 h-60 flex items-center justify-center -rotate-45 text-sm font-bold text-black">
-                    {user?.username} • {user?._id?.slice(-4)} <br />
-                    {new Date().toLocaleDateString()}
-                    <br /> NO SCREENSHOTS
-                </div>
-            ))}
-        </div>
-    );
+    // Watermark removed as per user request
+    return null;
 };
