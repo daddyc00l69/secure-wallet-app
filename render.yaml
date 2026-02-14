@@ -3,8 +3,9 @@ services:
   - type: web
     name: wallet-server
     runtime: node
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm start
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     healthCheckPath: /healthCheck
     envVars:
       - key: NODE_VERSION
