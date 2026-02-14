@@ -96,26 +96,26 @@ export const ProfilePage: React.FC = () => {
                 className="w-full max-w-md bg-white min-h-screen shadow-2xl relative"
             >
                 {/* Header */}
-                <div className="px-6 pt-8 pb-8 bg-white border-b border-gray-100 z-10 sticky top-0">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="px-6 pt-4 pb-4 md:pt-8 md:pb-8 bg-white border-b border-gray-100 z-10 sticky top-0">
+                    <div className="flex items-center justify-between mb-4 md:mb-6">
                         <button
                             onClick={() => navigate('/')}
                             className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
                         >
-                            <ArrowLeft className="w-6 h-6 text-gray-800" />
+                            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-xl font-bold text-gray-900">Profile</h1>
-                        <div className="w-10"></div> {/* Spacer to keep title centered if needed, or just remove */}
+                        <h1 className="text-lg md:text-xl font-bold text-gray-900">Profile</h1>
+                        <div className="w-10"></div> {/* Spacer */}
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-lg overflow-hidden">
-                            <span className="text-4xl text-gray-400 font-bold">
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-gray-100 rounded-full flex items-center justify-center mb-3 md:mb-4 border-4 border-white shadow-lg overflow-hidden">
+                            <span className="text-2xl md:text-4xl text-gray-400 font-bold">
                                 {user?.username?.charAt(0).toUpperCase() || 'U'}
                             </span>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900">{user?.username}</h2>
-                        <p className="text-gray-500">{user?.email || 'No email linked'}</p>
+                        <h2 className="text-lg md:text-2xl font-bold text-gray-900">{user?.username}</h2>
+                        <p className="text-sm md:text-base text-gray-500">{user?.email || 'No email linked'}</p>
 
                         {!user?.isVerified && (
                             <span className="mt-2 px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full">
