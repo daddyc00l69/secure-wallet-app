@@ -19,13 +19,14 @@ app.use((req, res, next) => {
     next();
 });
 
-const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',');
+const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(origin => origin.trim());
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            console.warn(`Blocked by CORS: ${origin}`);
+            console.error(`Blocked by CORS: '${origin}'`); // Changed to error for visibility
+            console.error(`Allowed Origins: ${JSON.stringify(allowedOrigins)}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
