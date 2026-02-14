@@ -78,10 +78,20 @@ npm run dev
 
 This project includes a `render.yaml` file for **zero-configuration deployment** on [Render](https://render.com).
 
-1.  Push this repository to GitHub.
-2.  Connect your GitHub account to Render.
-3.  Select "New Blueprint Instance" and choose this repo.
-4.  Render will automatically build and deploy both services!
+### Vercel Deployment (Frontend Only)
+
+If you are deploying the **frontend** to Vercel:
+
+1.  **Import Project:** Select the repository in Vercel.
+2.  **Framework Preset:** Choose **Vite**.
+3.  **Root Directory:** You **MUST** change this to `frontend`.
+    *   Click "Edit" next to Root Directory.
+    *   Select `frontend`.
+4.  **Output Directory:** Ensure this is set to `dist` (default for Vite).
+5.  **Environment Variables:** Add `VITE_API_URL` (your backend URL).
+
+We have included a `vercel.json` in the `frontend` folder to help with configuration.
+
 
 ## 🤝 Contributing
 
