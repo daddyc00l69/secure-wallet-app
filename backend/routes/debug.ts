@@ -1,5 +1,6 @@
 import express from 'express';
-import { transporter } from '../utils/email';
+
+import { getTransporter } from '../utils/email';
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.get('/email', async (req, res) => {
     try {
         // 1. Verify connection configuration
         try {
+            const transporter = await getTransporter();
             await transporter.verify();
             results.checks.push({ step: 'SMTP Connection', status: 'OK' });
         } catch (error) {
@@ -28,6 +30,7 @@ router.get('/email', async (req, res) => {
         }
 
         // 2. Send Test Email
+        const transporter = await getTransporter();
         const info = await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: targetEmail,

@@ -1,23 +1,49 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import dns from 'dns';
+import util from 'util';
+
 dotenv.config();
 
-export const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // use STARTTLS
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS?.replace(/\s+/g, '')
-    },
-    tls: {
-        ciphers: 'SSLv3'
-    },
-    family: 4, // Force IPv4
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000
-} as any);
+const resolve4 = util.promisify(dns.resolve4);
+let cachedTransporter: any = null;
+
+export const getTransporter = async () => {
+    if (cachedTransporter) return cachedTransporter;
+
+    let host = 'smtp.gmail.com';
+    try {
+        const addresses = await resolve4('smtp.gmail.com');
+        if (addresses && addresses.length > 0) {
+            host = addresses[0];
+            console.log(`[Email] Resolved smtp.gmail.com to IPv4: ${host}`);
+        }
+    } catch (err) {
+        console.warn('[Email] DNS resolution failed, falling back to domain:', err);
+    }
+
+    cachedTransporter = nodemailer.createTransport({
+        host: host,
+        port: 587,
+        secure: false, // use STARTTLS
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS?.replace(/\s+/g, '')
+        },
+        tls: {
+            ciphers: 'SSLv3',
+            servername: 'smtp.gmail.com' // proper SNI for IP connection
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000
+    } as any);
+
+    return cachedTransporter;
+};
+
+// Kept for backward compatibility if needed, but should be removed or deprecated
+// export const transporter = ... (removed)
 
 export const sendOTP = async (email: string, otp: string) => {
     try {
@@ -36,6 +62,7 @@ export const sendOTP = async (email: string, otp: string) => {
             `
         };
 
+        const transporter = await getTransporter();
         const info = await transporter.sendMail(mailOptions);
         console.log('Email sent: ' + info.response);
         return true;
@@ -59,6 +86,7 @@ export const sendWelcomeEmail = async (email: string, username: string) => {
                 </div>
             `
         };
+        const transporter = await getTransporter();
         await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
@@ -87,6 +115,7 @@ export const sendSecurityAlert = async (email: string, type: 'PIN_SET' | 'PIN_CH
                 </div>
             `
         };
+        const transporter = await getTransporter();
         await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
@@ -121,6 +150,7 @@ export const sendManagerInvite = async (email: string, otp: string) => {
                 </div>
             `
         };
+        const transporter = await getTransporter();
         await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
@@ -151,6 +181,7 @@ export const sendManagerSuccess = async (email: string, username: string) => {
                 </div>
             `
         };
+        const transporter = await getTransporter();
         await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
