@@ -6,7 +6,7 @@ dotenv.config();
 
 const verifyAdmin = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/wallet_db');
+        await mongoose.connect('mongodb+srv://hottel_user:EhHl2LJKFskg5rrl@daddycool.0dewsru.mongodb.net/?appName=DaddyCOOl');
         console.log('MongoDB Connected');
 
         const email = 'tushar0p.verify+1@gmail.com';
