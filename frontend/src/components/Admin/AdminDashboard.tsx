@@ -10,8 +10,6 @@ interface Stats {
     openTickets: number;
 }
 
-
-
 interface Ticket {
     _id: string;
     subject: string;
@@ -62,8 +60,6 @@ export const AdminDashboard: React.FC = () => {
         user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    // ... (Stats state) ...
 
     useEffect(() => {
         const fetchData = async () => {
@@ -183,12 +179,6 @@ export const AdminDashboard: React.FC = () => {
             alert('Invitation sent successfully!');
 
             // Refresh data (managers list might have the pending user)
-            /* const [managersRes] = await Promise.all([
-                axios.get(`${API_URL}/admin/managers`, { headers: { Authorization: `Bearer ${token}` } })
-            ]); 
-            setManagers(managersRes.data); */
-            // Since we use allUsers for display, we might need to refresh allUsers instead if this was relied upon.
-            // But for now just removing the error logic.
             const usersRes = await axios.get(`${API_URL}/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
             setAllUsers(usersRes.data);
         } catch (err: any) {
@@ -198,6 +188,14 @@ export const AdminDashboard: React.FC = () => {
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+
+    const maskEmail = (email: string) => {
+        if (!email) return '';
+        const [name, domain] = email.split('@');
+        if (!name || !domain) return email;
+        const maskedName = name.charAt(0) + '***';
+        return `${maskedName}@${domain}`;
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
@@ -258,7 +256,7 @@ export const AdminDashboard: React.FC = () => {
                                 {allUsers.filter(u => u.role === 'manager' || u.role === 'admin').map((user: any) => (
                                     <tr key={user._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                         <td className="py-3 font-bold text-gray-900">{user.username}</td>
-                                        <td className="py-3 text-gray-500">{user.email}</td>
+                                        <td className="py-3 text-gray-500">{maskEmail(user.email)}</td>
                                         <td className="py-3">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${user.role === 'admin' ? 'bg-black text-white' : 'bg-purple-100 text-purple-700'
                                                 }`}>
@@ -332,7 +330,7 @@ export const AdminDashboard: React.FC = () => {
                                 {filteredUsers.filter(u => u.role === 'user').map((user: any) => (
                                     <tr key={user._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                         <td className="py-3 font-bold text-gray-900">{user.username}</td>
-                                        <td className="py-3 text-gray-500">{user.email}</td>
+                                        <td className="py-3 text-gray-500">{maskEmail(user.email)}</td>
                                         <td className="py-3">
                                             <span className="px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
                                                 user
@@ -351,81 +349,81 @@ export const AdminDashboard: React.FC = () => {
                         </table>
                     </div>
                 </div>
-            </div>
 
-            {/* Tickets Management */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Ticket Management</h2>
+                {/* Tickets Management */}
+                <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Ticket Management</h2>
 
-                <div className="space-y-4">
-                    {tickets.map(ticket => (
-                        <div key={ticket._id} className="bg-white border border-gray-100 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${ticket.status === 'open' ? 'bg-green-100 text-green-700' :
-                                            ticket.status === 'closed' ? 'bg-gray-100 text-gray-700' :
-                                                'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                            {ticket.status.toUpperCase()}
-                                        </span>
-                                        <span className="text-xs text-gray-400">
-                                            {new Date(ticket.lastMessageAt || ticket.createdAt).toLocaleDateString()}
-                                        </span>
-                                        {(ticket.lastMessageSender === 'user' && ticket.status !== 'closed') && (
-                                            <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold animate-pulse">
-                                                New
+                    <div className="space-y-4">
+                        {tickets.map(ticket => (
+                            <div key={ticket._id} className="bg-white border border-gray-100 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${ticket.status === 'open' ? 'bg-green-100 text-green-700' :
+                                                ticket.status === 'closed' ? 'bg-gray-100 text-gray-700' :
+                                                    'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                {ticket.status.toUpperCase()}
                                             </span>
-                                        )}
+                                            <span className="text-xs text-gray-400">
+                                                {new Date(ticket.lastMessageAt || ticket.createdAt).toLocaleDateString()}
+                                            </span>
+                                            {(ticket.lastMessageSender === 'user' && ticket.status !== 'closed') && (
+                                                <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                                    New
+                                                </span>
+                                            )}
+                                        </div>
+                                        <h3 className={`text-lg font-bold text-gray-900 ${ticket.lastMessageSender === 'user' && ticket.status !== 'closed' ? 'border-l-4 border-red-500 pl-2' : ''}`}>
+                                            {ticket.subject}
+                                        </h3>
+                                        <p className={`text-gray-500 text-sm mt-1 ${ticket.lastMessageSender === 'user' && ticket.status !== 'closed' ? 'font-semibold text-gray-800' : ''}`}>
+                                            {ticket.message}
+                                        </p>
                                     </div>
-                                    <h3 className={`text-lg font-bold text-gray-900 ${ticket.lastMessageSender === 'user' && ticket.status !== 'closed' ? 'border-l-4 border-red-500 pl-2' : ''}`}>
-                                        {ticket.subject}
-                                    </h3>
-                                    <p className={`text-gray-500 text-sm mt-1 ${ticket.lastMessageSender === 'user' && ticket.status !== 'closed' ? 'font-semibold text-gray-800' : ''}`}>
-                                        {ticket.message}
-                                    </p>
-                                </div>
-                                <div className="text-right flex flex-col items-end gap-2">
-                                    <div className="text-right">
-                                        <p className="text-xs font-bold text-gray-900">ID: {ticket._id.slice(-6)}</p>
-                                        <p className="text-xs text-gray-400 uppercase">SUPPORT</p>
+                                    <div className="text-right flex flex-col items-end gap-2">
+                                        <div className="text-right">
+                                            <p className="text-xs font-bold text-gray-900">ID: {ticket._id.slice(-6)}</p>
+                                            <p className="text-xs text-gray-400 uppercase">SUPPORT</p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => handleDeleteTicket(ticket._id, e)}
+                                            className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded"
+                                        >
+                                            Delete
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={(e) => handleDeleteTicket(ticket._id, e)}
-                                        className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded"
-                                    >
-                                        Delete
-                                    </button>
                                 </div>
-                            </div>
 
-                            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
-                                <button
-                                    onClick={() => setSelectedTicket(ticket)}
-                                    className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 font-bold"
-                                >
-                                    View & Reply
-                                </button>
-                                {ticket.status !== 'closed' && (
+                                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
                                     <button
-                                        onClick={() => handleCloseTicket(ticket._id)}
-                                        className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-200 font-bold"
+                                        onClick={() => setSelectedTicket(ticket)}
+                                        className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 font-bold"
                                     >
-                                        Close
+                                        View & Reply
                                     </button>
-                                )}
-                                {ticket.status === 'closed' && (
-                                    <button
-                                        onClick={() => handleReopenTicket(ticket._id)}
-                                        className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded-lg hover:bg-green-100 font-bold"
-                                    >
-                                        Reopen
-                                    </button>
-                                )}
+                                    {ticket.status !== 'closed' && (
+                                        <button
+                                            onClick={() => handleCloseTicket(ticket._id)}
+                                            className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-200 font-bold"
+                                        >
+                                            Close
+                                        </button>
+                                    )}
+                                    {ticket.status === 'closed' && (
+                                        <button
+                                            onClick={() => handleReopenTicket(ticket._id)}
+                                            className="text-xs bg-green-50 text-green-600 px-3 py-1.5 rounded-lg hover:bg-green-100 font-bold"
+                                        >
+                                            Reopen
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                    {tickets.length === 0 && <p className="text-center text-gray-400 py-8">No tickets found.</p>}
+                        ))}
+                        {tickets.length === 0 && <p className="text-center text-gray-400 py-8">No tickets found.</p>}
+                    </div>
                 </div>
             </div>
 
