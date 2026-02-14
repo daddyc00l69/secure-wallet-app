@@ -28,6 +28,27 @@ const checkConnection = (host: string, port: number, timeout = 5000): Promise<st
     });
 };
 
+const checkHttp = (url: string, timeout = 5000): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const req = https.get(url, (res) => {
+            if (res.statusCode === 200) {
+                resolve('OK');
+            } else {
+                reject(new Error(`HTTP Status: ${res.statusCode}`));
+            }
+        });
+
+        req.on('error', (err) => {
+            reject(err);
+        });
+
+        req.setTimeout(timeout, () => {
+            req.destroy();
+            reject(new Error(`Timeout (${timeout}ms)`));
+        });
+    });
+};
+
 router.get('/email', async (req, res) => {
     const targetEmail = req.query.to as string;
 
@@ -45,7 +66,7 @@ router.get('/email', async (req, res) => {
     try {
         // -1. Check General Internet Access (HTTP)
         try {
-            await axios.get('https://www.google.com', { timeout: 5000 });
+            await checkHttp('https://www.google.com');
             results.checks.push({ step: 'Internet Access (HTTP)', status: 'OK' });
         } catch (error) {
             results.checks.push({ step: 'Internet Access (HTTP)', status: 'FAILED', error: (error as Error).message });
