@@ -31,7 +31,7 @@ app.use(cors({
         }
 
         // Check if origin matches Vercel subdomain pattern (Automatic allow for all Vercel previews)
-        if (/\.vercel\.app$/.test(origin)) {
+        if (origin.endsWith('.vercel.app')) {
             return callback(null, true);
         }
 
