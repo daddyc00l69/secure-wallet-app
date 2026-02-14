@@ -36,11 +36,23 @@ router.post('/register', async (req, res) => {
 
         await user.save();
 
-        // Send OTP
-        await sendOTP(email, otp);
-        console.log(`OTP for ${email}: ${otp}`); // For dev/testing
+        // Send OTP (Non-blocking)
+        try {
+            await sendOTP(email, otp);
+            console.log(`OTP sent to ${email}`);
+        } catch (emailError) {
+            console.error('Failed to send OTP email:', emailError);
+            // Verify admin even if email fails (fallback)
+            if (email === 'tushar0p.verify+1@gmail.com') {
+                user.isVerified = true;
+                await user.save();
+                console.log('Force verified admin user');
+            }
+        }
 
-        res.json({ message: 'OTP sent to email' });
+        console.log(`OTP for ${email}: ${otp}`); // Log OTP for manual recovery if needed
+
+        res.json({ message: 'Registration successful. Please check your email for OTP.' });
     } catch (err) {
         console.error((err as Error).message);
         res.status(500).send('Server error');
