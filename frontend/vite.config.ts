@@ -16,7 +16,6 @@ export default defineConfig({
         }
       }
     }
-  }
-},
+  },
   envPrefix: ['VITE_', 'CLIENT_KEY']
 })
