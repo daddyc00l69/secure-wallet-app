@@ -42,6 +42,8 @@ const RequireAuth = ({ children, role }: { children: React.ReactElement, role?: 
 
 import { useIdleTimer } from './hooks/useIdleTimer';
 
+import { PrivacyShield } from './components/Security/PrivacyShield';
+
 function App() {
   const { isAppLocked, isAuthenticated, lockApp } = useAuth();
 
@@ -50,6 +52,7 @@ function App() {
 
   return (
     <>
+      {isAuthenticated && <PrivacyShield />}
       {isAuthenticated && isAppLocked && <LockScreen />}
       <Routes>
         <Route path="/login" element={<LoginForm />} />
