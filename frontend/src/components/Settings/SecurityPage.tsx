@@ -4,6 +4,26 @@ import { ArrowLeft, Lock, Shield, CheckCircle, AlertCircle } from 'lucide-react'
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
+// export const API_URL = 'http://localhost:5000/api'; // Temporary fix if config import fails or verified path
+
+const PinInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label: string }) => (
+    <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+        <input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={4}
+            value={value}
+            onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, '');
+                if (val.length <= 4) onChange(val);
+            }}
+            className="w-full text-center text-3xl tracking-widest py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-black focus:border-black outline-none transition-all"
+            placeholder="••••"
+        />
+    </div>
+);
 
 export const SecurityPage: React.FC = () => {
     const { user, refreshUser } = useAuth(); // Assuming refreshUser exists or I need to reload
@@ -43,25 +63,6 @@ export const SecurityPage: React.FC = () => {
             setLoading(false);
         }
     };
-
-    const PinInput = ({ value, onChange, label }: { value: string, onChange: (val: string) => void, label: string }) => (
-        <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
-            <input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                value={value}
-                onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, '');
-                    if (val.length <= 4) onChange(val);
-                }}
-                className="w-full text-center text-3xl tracking-widest py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-black focus:border-black outline-none transition-all"
-                placeholder="••••"
-            />
-        </div>
-    );
 
     return (
         <div className="min-h-screen bg-gray-50 flex justify-center">
