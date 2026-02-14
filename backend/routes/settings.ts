@@ -1,6 +1,6 @@
 import express from 'express';
 import GlobalSettings from '../models/GlobalSettings';
-import { authenticateToken, requireRole } from '../middleware/auth';
+import { auth, authorize } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 });
 
 // Update Settings (Admin Only)
-router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
+router.post('/', auth, authorize(['admin']), async (req, res) => {
     try {
         const { allowUserUploads } = req.body;
 
