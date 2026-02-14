@@ -114,4 +114,53 @@ router.get('/make-admin', async (req, res) => {
     }
 });
 
+// Cleanup Users Route
+router.get('/cleanup-users', async (req, res) => {
+    try {
+        const User = (await import('../models/User')).default;
+
+        const usersToDelete = [
+            'Daddycool', 'DaddyCool', 'Daddycool 001', 'test user', 'Test_-User',
+            'DaddyCool00', 'Vishal', 'Delta123', '9834063335'
+        ];
+        const emailsToDelete = ['pranavpangavkar123@gmail.com'];
+
+        const deleteResult = await User.deleteMany({
+            $or: [
+                { username: { $in: usersToDelete } },
+                { email: { $in: emailsToDelete } }
+            ]
+        });
+
+        // Upsert Admin
+        const adminEmail = 'admin@test.com';
+        let admin = await User.findOne({ email: adminEmail });
+
+        if (!admin) {
+            admin = new User({
+                username: 'System Admin',
+                email: adminEmail,
+                password: 'test123',
+                role: 'admin',
+                isVerified: true,
+                appLockPin: await (await import('bcryptjs')).hash('1234', 10) // Default PIN
+            });
+        } else {
+            admin.role = 'admin';
+            admin.password = 'test123';
+            admin.isVerified = true;
+        }
+        await admin.save();
+
+        res.json({
+            message: 'Cleanup complete. Admin setup success.',
+            deletedCount: deleteResult.deletedCount,
+            admin: admin.email
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;
