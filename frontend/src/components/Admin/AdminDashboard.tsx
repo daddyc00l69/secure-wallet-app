@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
-import { Users, Ticket, UserPlus, Shield, Loader2, Search, Download } from 'lucide-react';
+import { Users, Ticket, UserPlus, Shield, Loader2, Search, Download, Settings, Lock, Eye, EyeOff, Save } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Stats {
     users: number;
@@ -27,7 +28,6 @@ export const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<Stats | null>(null);
     const [allUsers, setAllUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [replyMessage, setReplyMessage] = useState('');
