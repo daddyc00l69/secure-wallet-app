@@ -46,12 +46,12 @@ const CardSchema: Schema = new Schema({
 }, {
     toJSON: {
         virtuals: true,
-        transform: function (doc, ret) {
+        transform: function (doc, ret: any) {
             delete ret.encryptedNumber;
             delete ret.iv;
             delete ret.encryptedCvv;
             delete ret.cvvIv;
-            delete ret.id; // Optional: Keep _id or id
+            if (ret.id) delete ret.id;
             return ret;
         }
     },
