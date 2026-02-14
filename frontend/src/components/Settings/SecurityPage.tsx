@@ -58,7 +58,9 @@ export const SecurityPage: React.FC = () => {
             // Refresh user to update hasPin status
             await refreshUser();
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to set PIN' });
+            console.error('Failed to set PIN', error);
+            const errMsg = error.response?.data?.message || error.message || 'Failed to set PIN';
+            setMessage({ type: 'error', text: errMsg });
         } finally {
             setLoading(false);
         }
