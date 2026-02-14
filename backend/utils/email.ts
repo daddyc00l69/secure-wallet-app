@@ -5,7 +5,7 @@ import util from 'util';
 
 dotenv.config();
 
-const resolve4 = util.promisify(dns.resolve4);
+const lookup = util.promisify(dns.lookup);
 let cachedTransporter: any = null;
 
 export const getTransporter = async () => {
@@ -13,13 +13,14 @@ export const getTransporter = async () => {
 
     let host = 'smtp.gmail.com';
     try {
-        const addresses = await resolve4('smtp.gmail.com');
-        if (addresses && addresses.length > 0) {
-            host = addresses[0];
-            console.log(`[Email] Resolved smtp.gmail.com to IPv4: ${host}`);
+        // Use dns.lookup with family: 4 to respect OS routing/hosts file
+        const result = await lookup('smtp.gmail.com', { family: 4 });
+        if (result && result.address) {
+            host = result.address;
+            console.log(`[Email] dns.lookup resolved smtp.gmail.com to IPv4: ${host}`);
         }
     } catch (err) {
-        console.warn('[Email] DNS resolution failed, falling back to domain:', err);
+        console.warn('[Email] DNS lookup failed, falling back to domain:', err);
     }
 
     cachedTransporter = nodemailer.createTransport({
@@ -32,12 +33,10 @@ export const getTransporter = async () => {
         },
         tls: {
             servername: 'smtp.gmail.com' // proper SNI for IP connection
-            // REJECT_UNAUTHORIZED: true // Optional: keep true for security
         },
-        localAddress: '0.0.0.0', // Force binding to IPv4 interface
-        connectionTimeout: 20000,
-        greetingTimeout: 20000,
-        socketTimeout: 20000
+        connectionTimeout: 60000, // 60s timeout
+        greetingTimeout: 60000,
+        socketTimeout: 60000
     } as any);
 
     return cachedTransporter;
