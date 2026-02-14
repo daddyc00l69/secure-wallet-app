@@ -21,6 +21,7 @@ interface Ticket {
     messages?: { sender: string, message: string, timestamp: string }[];
     lastMessageAt?: string;
     lastMessageSender?: 'user' | 'agent';
+    allowAttachments?: boolean;
 }
 
 export const ManagerDashboard: React.FC = () => {
@@ -71,6 +72,22 @@ export const ManagerDashboard: React.FC = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const updatedTicket = { ...selectedTicket, status: 'closed' as const };
+            setTickets(prev => prev.map(t => t._id === selectedTicket._id ? updatedTicket : t));
+            setSelectedTicket(updatedTicket);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    const handleToggleUpload = async () => {
+        if (!selectedTicket) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${API_URL}/manager/tickets/${selectedTicket._id}/toggle-upload`, {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            // Updating local state
+            const updatedTicket = { ...selectedTicket, allowAttachments: res.data.allowAttachments };
             setTickets(prev => prev.map(t => t._id === selectedTicket._id ? updatedTicket : t));
             setSelectedTicket(updatedTicket);
         } catch (err) {
@@ -138,12 +155,23 @@ export const ManagerDashboard: React.FC = () => {
                                 </p>
                             </div>
                             {selectedTicket.status !== 'closed' && (
-                                <button
-                                    onClick={handleClose}
-                                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 font-bold text-sm"
-                                >
-                                    Close Ticket
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleToggleUpload}
+                                        className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${selectedTicket.allowAttachments
+                                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        {selectedTicket.allowAttachments ? 'Uploads Allowed' : 'Allow Uploads'}
+                                    </button>
+                                    <button
+                                        onClick={handleClose}
+                                        className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-bold text-sm"
+                                    >
+                                        Close Ticket
+                                    </button>
+                                </div>
                             )}
                         </div>
 
