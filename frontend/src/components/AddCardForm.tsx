@@ -98,7 +98,7 @@ export const AddCardForm: React.FC<AddCardFormProps> = ({ isOpen, onClose, onSub
             cvv: '',
             type: defaultCategory === 'identity' ? 'aadhaar' : 'visa',
             category: defaultCategory,
-            bank: 'ICICI Bank',
+            bank: defaultCategory === 'identity' ? '' : 'ICICI Bank',
             theme: themes[0].value,
             pin: '',
             image: ''
@@ -122,7 +122,7 @@ export const AddCardForm: React.FC<AddCardFormProps> = ({ isOpen, onClose, onSub
                 cvv: '',
                 type: defaultCategory === 'identity' ? 'aadhaar' : 'visa',
                 category: defaultCategory,
-                bank: 'ICICI Bank',
+                bank: defaultCategory === 'identity' ? '' : 'ICICI Bank',
                 theme: themes[0].value,
                 pin: '',
                 image: ''
