@@ -22,7 +22,7 @@ services:
     name: wallet-client
     runtime: static
     buildCommand: cd frontend && npm install && npm run build
-    publishPath: frontend/builds
+    publishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         fromService:
