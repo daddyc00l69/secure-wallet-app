@@ -1,0 +1,32 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: wallet-server
+    runtime: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.x
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false # Set this in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*" # Update this after frontend is deployed or use wildcard
+
+  # Frontend Static Site
+  - type: web
+    name: wallet-client
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: frontend/builds
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: wallet-server
+          property: url
+        suffix: /api

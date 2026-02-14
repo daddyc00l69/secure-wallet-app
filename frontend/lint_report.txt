@@ -1,0 +1,97 @@
+﻿
+> client@0.0.0 lint
+> eslint .
+
+
+D:\antigravitey\Wallet\V1\client\src\components\AddAddressForm.tsx
+  47:27  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+D:\antigravitey\Wallet\V1\client\src\components\AddAddressForm.tsx:47:27
+  45 |     });
+  46 |
+> 47 |     const watchedValues = watch();
+     |                           ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  48 |
+  49 |     const handleFormSubmit = async (data: AddressFormData) => {
+  50 |         await onSubmit(data);  react-hooks/incompatible-library
+
+D:\antigravitey\Wallet\V1\client\src\components\AddBankAccountForm.tsx
+   47:27  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+D:\antigravitey\Wallet\V1\client\src\components\AddBankAccountForm.tsx:47:27
+  45 |     });
+  46 |
+> 47 |     const watchedValues = watch();
+     |                           ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  48 |
+  49 |     const handleFormSubmit = async (data: BankAccountFormData) => {
+  50 |         const formattedData = {  react-hooks/incompatible-library
+  109:59  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  171:68  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  171:81  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  171:96  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+
+D:\antigravitey\Wallet\V1\client\src\components\AddCardForm.tsx
+  159:69  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  161:77  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  208:61  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+D:\antigravitey\Wallet\V1\client\src\components\AddCardForm.tsx:208:61
+  206 |                                                     onChange={(e) => {
+  207 |                                                         let value = e.target.value.toUpperCase();
+> 208 |                                                         if (watch('category') === 'identity' && watch('type') === 'aadhaar') {
+      |                                                             ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  209 |                                                             value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+  210 |                                                         } else if (watch('category') !== 'identity') {
+  211 |                                                             value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');  react-hooks/incompatible-library
+
+D:\antigravitey\Wallet\V1\client\src\components\Auth\LoginForm.tsx
+  19:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\antigravitey\Wallet\V1\client\src\components\Auth\RegisterForm.tsx
+  19:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\antigravitey\Wallet\V1\client\src\components\Card.tsx
+   47:9   error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+  146:41  error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+  212:45  error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+
+D:\antigravitey\Wallet\V1\client\src\components\Settings\DataManagement.tsx
+   85:29  error  '_id' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   85:34  error  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   85:40  error  '__v' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   92:29  error  '_id' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   92:34  error  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   92:40  error  '__v' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   99:29  error  '_id' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   99:34  error  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   99:40  error  '__v' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  101:21  error  'successCount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\antigravitey\Wallet\V1\client\src\context\AuthContext.tsx
+  35:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\antigravitey\Wallet\V1\client\src\context\AuthContext.tsx:35:9
+  33 |             delete axios.defaults.headers.common['Authorization'];
+  34 |         }
+> 35 |         setLoading(false);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     }, [token]);
+  37 |
+  38 |     const login = (newToken: string) => {  react-hooks/set-state-in-effect
+  56:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-refresh/only-export-components
+
+Ô£û 26 problems (23 errors, 3 warnings)
+
