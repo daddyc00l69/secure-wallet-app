@@ -17,7 +17,7 @@ interface Ticket {
     message: string;
     status: string;
     escalated: boolean;
-    user: { username: string };
+    user: { _id: string, username: string };
     createdAt: string;
     lastMessageAt?: string;
     lastMessageSender?: 'user' | 'agent';
@@ -102,14 +102,16 @@ export const AdminDashboard: React.FC = () => {
         }
     };
 
-    const handleReplyTicket = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedTicket || !replyMessage.trim()) return;
+    const handleReplyTicket = async (e: React.FormEvent, customMessage?: string) => {
+        if (e) e.preventDefault();
+        const msgToSend = customMessage || replyMessage;
+
+        if (!selectedTicket || !msgToSend.trim()) return;
 
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(`${API_URL}/manager/tickets/${selectedTicket._id}/reply`,
-                { message: replyMessage },
+                { message: msgToSend },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setSelectedTicket(res.data);
@@ -117,6 +119,34 @@ export const AdminDashboard: React.FC = () => {
             setReplyMessage('');
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleGrantAccess = async () => {
+        if (!selectedTicket || !selectedTicket.user?._id) {
+            alert('Cannot grant access: User ID missing on ticket.');
+            return;
+        }
+
+        if (!window.confirm('Grant 15-minute edit access to this user?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${API_URL}/access/grant`,
+                { userId: selectedTicket.user._id },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const { link } = res.data;
+            // Get base URL from window location to form full link if backend returns relative
+            const fullLink = `${window.location.origin}${link}`;
+
+            await handleReplyTicket(null as any, `You have been granted temporary access to edit your profile and add cards. This link is valid for 15 minutes:\n\n${fullLink}`);
+
+            alert('Access granted and link sent to user.');
+        } catch (err: any) {
+            console.error(err);
+            alert('Failed to grant access');
         }
     };
 
@@ -318,8 +348,8 @@ export const AdminDashboard: React.FC = () => {
                                             </td>
                                             <td className="py-3">
                                                 <span className={`px-2 py-1 rounded-lg text-xs font-bold ${user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                                                        user.role === 'manager' ? 'bg-purple-500/20 text-purple-400' :
-                                                            'bg-blue-500/20 text-blue-400'
+                                                    user.role === 'manager' ? 'bg-purple-500/20 text-purple-400' :
+                                                        'bg-blue-500/20 text-blue-400'
                                                     }`}>
                                                     {user.role}
                                                 </span>
@@ -455,16 +485,28 @@ export const AdminDashboard: React.FC = () => {
 
                             <div className="p-4 bg-gray-800/50 border-t border-white/10">
                                 {selectedTicket.status !== 'closed' ? (
-                                    <form onSubmit={handleReplyTicket} className="flex gap-2">
-                                        <input
-                                            value={replyMessage}
-                                            onChange={e => setReplyMessage(e.target.value)}
-                                            placeholder="Type a reply..."
-                                            className="flex-1 bg-gray-900 border border-white/10 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        />
-                                        <button type="submit" className="bg-blue-600 px-4 rounded-xl font-bold hover:bg-blue-500">Send</button>
-                                        <button type="button" onClick={() => handleCloseTicket(selectedTicket._id)} className="bg-red-500/20 text-red-400 px-4 rounded-xl font-bold hover:bg-red-500/30">Close</button>
-                                    </form>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleGrantAccess}
+                                                className="bg-purple-600/20 text-purple-400 px-3 py-1 rounded-lg text-xs font-bold border border-purple-500/30 hover:bg-purple-600/30 flex items-center gap-1"
+                                                title="Grant 15 min edit access"
+                                                type="button"
+                                            >
+                                                <Lock className="w-3 h-3" /> Grant Access
+                                            </button>
+                                        </div>
+                                        <form onSubmit={(e) => handleReplyTicket(e)} className="flex gap-2">
+                                            <input
+                                                value={replyMessage}
+                                                onChange={e => setReplyMessage(e.target.value)}
+                                                placeholder="Type a reply..."
+                                                className="flex-1 bg-gray-900 border border-white/10 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            />
+                                            <button type="submit" className="bg-blue-600 px-4 rounded-xl font-bold hover:bg-blue-500">Send</button>
+                                            <button type="button" onClick={() => handleCloseTicket(selectedTicket._id)} className="bg-red-500/20 text-red-400 px-4 rounded-xl font-bold hover:bg-red-500/30">Close</button>
+                                        </form>
+                                    </div>
                                 ) : (
                                     <button onClick={() => handleReopenTicket(selectedTicket._id)} className="w-full bg-green-600 py-3 rounded-xl font-bold hover:bg-green-500">Reopen Ticket</button>
                                 )}
