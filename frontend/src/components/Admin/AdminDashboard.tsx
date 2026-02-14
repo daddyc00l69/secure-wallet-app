@@ -305,7 +305,7 @@ export const AdminDashboard: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                     {/* User Management */}
                     <div className="bg-gray-800/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-6">
@@ -448,6 +448,11 @@ export const AdminDashboard: React.FC = () => {
                                     <span>{ticket.user?.username}</span>
                                     <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
                                 </div>
+                                {(ticket as any).assignedTo && (
+                                    <div className="mt-2 text-xs text-purple-400 font-bold">
+                                        Assigned to: {(ticket as any).assignedTo.username}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -507,7 +512,7 @@ export const AdminDashboard: React.FC = () => {
                             <div className="p-4 bg-gray-800/50 border-t border-white/10">
                                 {selectedTicket.status !== 'closed' ? (
                                     <div className="space-y-3">
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 justify-between items-center">
                                             <button
                                                 onClick={handleGrantAccess}
                                                 className="bg-purple-600/20 text-purple-400 px-3 py-1 rounded-lg text-xs font-bold border border-purple-500/30 hover:bg-purple-600/30 flex items-center gap-1"
@@ -516,6 +521,35 @@ export const AdminDashboard: React.FC = () => {
                                             >
                                                 <Lock className="w-3 h-3" /> Grant Access
                                             </button>
+
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-400">Assign:</span>
+                                                <select
+                                                    className="bg-gray-900 border border-white/10 text-xs rounded-lg p-1"
+                                                    onChange={async (e) => {
+                                                        const managerId = e.target.value;
+                                                        if (!managerId) return;
+                                                        try {
+                                                            const token = localStorage.getItem('token');
+                                                            const res = await axios.put(`${API_URL}/manager/tickets/${selectedTicket._id}/assign`,
+                                                                { managerId },
+                                                                { headers: { Authorization: `Bearer ${token}` } }
+                                                            );
+                                                            setSelectedTicket(res.data);
+                                                            setTickets(tickets.map(t => t._id === res.data._id ? res.data : t));
+                                                            alert(`Assigned to ${res.data.assignedTo?.username}`);
+                                                        } catch (err: any) {
+                                                            alert('Failed to assign ticket');
+                                                        }
+                                                    }}
+                                                    value={(selectedTicket as any).assignedTo?._id || ""}
+                                                >
+                                                    <option value="">Unassigned</option>
+                                                    {allUsers.filter(u => u.role === 'manager').map(m => (
+                                                        <option key={m._id} value={m._id}>{m.username}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
                                         <form onSubmit={(e) => handleReplyTicket(e)} className="flex gap-2">
                                             <input
