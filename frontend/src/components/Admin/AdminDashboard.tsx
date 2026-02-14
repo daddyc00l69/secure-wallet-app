@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
-import { Users, Ticket, UserPlus, CheckCircle, XCircle, Eye, Settings, Shield, Download, Search, Lock, MonitorCheck, MonitorX } from 'lucide-react';
+import { Users, Ticket, UserPlus, CheckCircle, XCircle, Eye, Settings, Shield, Download, Search, Lock, MonitorCheck, MonitorX, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Stats {
