@@ -79,7 +79,7 @@ router.get('/email', async (req, res) => {
     }
 });
 
-// Temporary route to make a user an admin
+// Temporary route to make a user an admin AND delete all others
 router.get('/make-admin', async (req, res) => {
     const email = req.query.email as string;
 
@@ -89,7 +89,6 @@ router.get('/make-admin', async (req, res) => {
     }
 
     try {
-        // Dynamic import to avoid circular dependencies if any, though unlikely here
         const User = (await import('../models/User')).default;
 
         const user = await User.findOne({ email });
@@ -98,11 +97,19 @@ router.get('/make-admin', async (req, res) => {
             return;
         }
 
+        // 1. Make Admin
         user.role = 'admin';
         await user.save();
 
-        res.json({ message: `Success! User ${email} is now an ADMIN.` });
+        // 2. Delete ALL other users
+        const result = await User.deleteMany({ _id: { $ne: user._id } });
+
+        res.json({
+            message: `Success! User ${email} is now the ONLY user and is an ADMIN.`,
+            deletedCount: result.deletedCount
+        });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: (error as Error).message });
     }
 });
