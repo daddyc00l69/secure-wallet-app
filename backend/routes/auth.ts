@@ -130,6 +130,7 @@ router.post('/login', async (req, res) => {
             $or: [{ username }, { email: username }]
         });
         if (!user) {
+            console.error('[Login Failed] User not found for:', username);
             res.status(400).json({ message: 'Invalid Credentials' });
             return;
         }
@@ -143,6 +144,7 @@ router.post('/login', async (req, res) => {
                 await user.save();
                 console.log(`Auto-verified admin: ${user.email}`);
             } else {
+                console.error('[Login Failed] Unverified user:', user.email);
                 res.status(400).json({ message: 'Please verify your email first' });
                 return;
             }
@@ -150,6 +152,7 @@ router.post('/login', async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.error('[Login Failed] Invalid password for:', user.email);
             res.status(400).json({ message: 'Invalid Credentials' });
             return;
         }

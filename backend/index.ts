@@ -51,6 +51,10 @@ app.use('/api/auth', authRoutes);
 import supportRoutes from './routes/support';
 app.use('/api/support', supportRoutes);
 
+// Debug Routes
+import debugRoutes from './routes/debug';
+app.use('/api/debug', debugRoutes);
+
 // Admin Routes
 // Admin Routes
 import adminRoutes from './routes/admin';
