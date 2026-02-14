@@ -79,4 +79,32 @@ router.get('/email', async (req, res) => {
     }
 });
 
+// Temporary route to make a user an admin
+router.get('/make-admin', async (req, res) => {
+    const email = req.query.email as string;
+
+    if (!email) {
+        res.status(400).json({ message: 'Missing email query parameter' });
+        return;
+    }
+
+    try {
+        // Dynamic import to avoid circular dependencies if any, though unlikely here
+        const User = (await import('../models/User')).default;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            res.status(404).json({ message: `User not found: ${email}` });
+            return;
+        }
+
+        user.role = 'admin';
+        await user.save();
+
+        res.json({ message: `Success! User ${email} is now an ADMIN.` });
+    } catch (error) {
+        res.status(500).json({ error: (error as Error).message });
+    }
+});
+
 export default router;
