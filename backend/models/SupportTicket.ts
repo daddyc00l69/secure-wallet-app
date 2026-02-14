@@ -21,6 +21,7 @@ export interface ISupportTicket extends Document {
         size: number;
         uploadedAt: Date;
     }[];
+    assignedTo?: mongoose.Schema.Types.ObjectId;
 }
 
 const SupportTicketSchema: Schema = new Schema({
@@ -28,6 +29,10 @@ const SupportTicketSchema: Schema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    assignedTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     },
     subject: {
         type: String,
