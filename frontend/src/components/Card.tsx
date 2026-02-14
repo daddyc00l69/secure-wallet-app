@@ -209,25 +209,34 @@ export const Card: React.FC<CardProps> = ({ card, onFlip, showCvv = false, showN
                 )}>
                     <div className="w-full h-12 bg-black mt-2" />
                     <div className="px-8 relative">
-                        <div className="flex justify-end items-center">
-                            <div className="w-full h-10 bg-white/90 rounded flex items-center justify-between px-3">
-                                <p className="text-black font-mono font-bold tracking-widest text-lg">
-                                    {showCvv ? (revealedCvv || card.cvv) : '***'}
-                                </p>
-                                {!showCvv && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onViewCvv?.();
-                                        }}
-                                        className="text-gray-600 hover:text-black transition-colors"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
-                                )}
+                        {card.category !== 'identity' && (
+                            <>
+                                <div className="flex justify-end items-center">
+                                    <div className="w-full h-10 bg-white/90 rounded flex items-center justify-between px-3">
+                                        <p className="text-black font-mono font-bold tracking-widest text-lg">
+                                            {showCvv ? (revealedCvv || card.cvv) : '***'}
+                                        </p>
+                                        {!showCvv && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onViewCvv?.();
+                                                }}
+                                                className="text-gray-600 hover:text-black transition-colors"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1 text-right mr-1">CVV</p>
+                            </>
+                        )}
+                        {card.category === 'identity' && (
+                            <div className="flex justify-center items-center h-16">
+                                <p className="text-xs text-gray-500 italic">Government Issued ID</p>
                             </div>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1 text-right mr-1">CVV</p>
+                        )}
                     </div>
 
                     <div className="px-8 flex justify-between items-end mb-2">
