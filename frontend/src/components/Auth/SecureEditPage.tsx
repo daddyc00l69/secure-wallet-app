@@ -10,8 +10,7 @@ export const SecureEditPage: React.FC = () => {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
-    const [valid, setValid] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
+    // const [valid, setValid] = useState(false); // Unused
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -30,8 +29,7 @@ export const SecureEditPage: React.FC = () => {
             try {
                 const res = await axios.post(`${API_URL}/access/verify`, { token });
                 if (res.data.valid) {
-                    setValid(true);
-                    setUserId(res.data.userId);
+                    // setValid(true);
                     // Fetch user current data to edit
                     // We need a public or token-based endpoint to get user data for editing
                     // For now, we might just allow setting new data or we need an endpoint that accepts this token to fetch data
