@@ -45,6 +45,11 @@ router.put('/tickets/:id/assign', auth, authorize(['admin', 'manager']), async (
             return;
         }
 
+        const assignee = await User.findById(managerId);
+        if (assignee && assignee.role === 'admin') {
+            ticket.escalated = true;
+        }
+
         ticket.assignedTo = managerId;
         await ticket.save();
 
