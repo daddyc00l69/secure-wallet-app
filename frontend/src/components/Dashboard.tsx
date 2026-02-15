@@ -55,7 +55,7 @@ export function Dashboard() {
                         window.history.replaceState({}, '', window.location.pathname);
                     }
                 })
-                .catch(err => {
+                .catch(() => {
                     console.error('Invalid access token');
                 });
         }
