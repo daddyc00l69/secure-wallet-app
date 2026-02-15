@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
         res.json({ message: 'Registration successful. Please check your email for OTP.' });
     } catch (err) {
         console.error((err as Error).message);
-        res.status(500).send('Server error');
+        res.status(500).json({ message: 'Server error', error: (err as Error).message });
     }
 });
 
