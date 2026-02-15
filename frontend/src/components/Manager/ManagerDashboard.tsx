@@ -39,19 +39,30 @@ export const ManagerDashboard: React.FC = () => {
             const token = localStorage.getItem('token');
             const res = await axios.get(`${API_URL}/manager/tickets`, { headers: { Authorization: `Bearer ${token}` } });
             setTickets(res.data);
+            return res.data;
         } catch (err) {
             console.error(err);
+            return [];
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            fetchTickets();
+        fetchTickets();
+        const interval = setInterval(async () => {
+            const newTickets = await fetchTickets();
+            if (selectedTicket) {
+                const updated = newTickets.find((t: Ticket) => t._id === selectedTicket._id);
+                if (updated && JSON.stringify(updated.messages) !== JSON.stringify(selectedTicket.messages)) {
+                    setSelectedTicket(updated);
+                }
+            }
         }, 3000);
         return () => clearInterval(interval);
-    }, []);
+    }, [selectedTicket]);
+
+
 
     const handleReply = async () => {
         if (!selectedTicket || !reply.trim()) return;
