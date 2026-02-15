@@ -138,9 +138,66 @@ const fixSystem = async () => {
             }
         }
 
+        // Cards
+        const cards = await mongoose.model('Card').find({});
+        for (const card of cards) {
+            const c = card as any;
+            let modified = false;
+
+            // Holder
+            if (c._doc.holder && !c.encryptedHolder) {
+                const { iv, content } = encrypt(c._doc.holder);
+                c.encryptedHolder = content;
+                c.holderIv = iv;
+                modified = true;
+            }
+
+            // Expiry
+            if (c._doc.expiry && !c.encryptedExpiry) {
+                const { iv, content } = encrypt(c._doc.expiry);
+                c.encryptedExpiry = content;
+                c.expiryIv = iv;
+                modified = true;
+            }
+
+            // PIN
+            if (c._doc.pin && !c.encryptedPin) {
+                const { iv, content } = encrypt(c._doc.pin);
+                c.encryptedPin = content;
+                c.pinIv = iv;
+                modified = true;
+            }
+
+            // Bank
+            if (c._doc.bank && !c.encryptedBank) {
+                const { iv, content } = encrypt(c._doc.bank);
+                c.encryptedBank = content;
+                c.bankIv = iv;
+                modified = true;
+            }
+
+            if (modified) {
+                const updateData: any = {
+                    encryptedHolder: c.encryptedHolder,
+                    holderIv: c.holderIv,
+                    encryptedExpiry: c.encryptedExpiry,
+                    expiryIv: c.expiryIv,
+                    encryptedPin: c.encryptedPin,
+                    pinIv: c.pinIv,
+                    encryptedBank: c.encryptedBank,
+                    bankIv: c.bankIv
+                };
+
+                // Cleanup undefined
+                Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+                await mongoose.model('Card').updateOne({ _id: c._id }, { $set: updateData, $unset: { holder: 1, expiry: 1, pin: 1, bank: 1 } });
+                console.log(`Migrated Card ${c._id}`);
+            }
+        }
+
         console.log('System Fix Complete.');
         process.exit(0);
-
     } catch (err) {
         console.error('System Fix Failed:', err);
         process.exit(1);
