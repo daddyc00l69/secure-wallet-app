@@ -18,22 +18,85 @@ interface ITicket {
     lastMessageSender?: 'user' | 'agent';
     allowAttachments?: boolean;
     assignedTo?: { _id: string, username: string };
+    attachments?: { originalName: string, filename: string, path: string }[];
 }
 
-const Linkify = ({ text }: { text: string }) => {
+const MessageContent = ({ text, attachments }: { text: string, attachments?: ITicket['attachments'] }) => {
+    // Regex for URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
+    // Regex for [Attachment Uploaded: filename]
+    const attachRegex = /\[Attachment Uploaded: (.*?)\]/g;
+
+    // Helper to find attachment url
+    const getAttachmentUrl = (originalName: string) => {
+        if (!attachments) return '#';
+        const att = attachments.find(a => a.originalName === originalName);
+        return att ? `${API_URL}/uploads/${att.filename}` : '#';
+    };
+
+    // Split by Attachment first
+    const parts = text.split(attachRegex);
+
+    // If no attachments match, parts will be [text]. If match, [before, filename, after]
+    // But split with capturing group returns the capture.
+
+    // Better strategy: Tokenize.
+    // Let's just do a simpler replacement if we assume the message IS the attachment notification (which it is for system messages).
+    // But user might type text with it? Unlikely for system message.
+    // However, let's handle it robustly.
+
+    // We will map over parts. If part matches an attachment name (how do we know? logic below), render link.
+    // The split logic with regex `( ... )` includes the separator.
+    // e.g. "Hi [Attachment Uploaded: foo.png] Bye". split -> ["Hi ", "foo.png", " Bye"]
+
     return (
         <>
-            {parts.map((part, i) =>
-                urlRegex.test(part) ? (
-                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-                        {part}
-                    </a>
-                ) : (
-                    part
-                )
-            )}
+            {parts.map((part, i) => {
+                // Check if this part is a filename from the capture group
+                // We can't strictly know just by string value, unless we reconstruct.
+                // A safer way: matching logic.
+                // Let's iterate all matches. 
+
+                // Simplified approach:
+                // 1. Check if the WHOLE text is an attachment message (common case).
+                const match = text.match(/^\[Attachment Uploaded: (.*?)\]$/);
+                if (match) {
+                    const filename = match[1];
+                    const url = getAttachmentUrl(filename);
+                    return (
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline flex items-center gap-1">
+                            <Paperclip className="w-3 h-3" /> {filename}
+                        </a>
+                    );
+                }
+
+                // 2. Mixed content (fallback to URL linking only, or handle more complex parsing if needed).
+                // If it contains the tag but not exact match:
+                if (part.match(attachRegex) || (i % 2 === 1 && text.includes(`[Attachment Uploaded: ${part}]`))) {
+                    // This is the captured group index (1, 3, 5...)
+                    // i=1 is the captured group.
+                    const url = getAttachmentUrl(part);
+                    return (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline inline-flex items-center gap-1">
+                            <Paperclip className="w-3 h-3" /> {part}
+                        </a>
+                    );
+                }
+
+                // URL Linkify Logic for text parts
+                const urlParts = part.split(urlRegex);
+                return (
+                    <span key={i}>
+                        {urlParts.map((subPart, j) =>
+                            urlRegex.test(subPart) ? (
+                                <a key={j} href={subPart} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                                    {subPart}
+                                </a>
+                            ) : subPart
+                        )}
+                    </span>
+                );
+            })}
         </>
     );
 };
@@ -325,7 +388,7 @@ export const TicketsView: React.FC = () => {
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar" ref={chatContainerRef}>
                             <div className="bg-[#1a1d24] border border-white/5 p-4 rounded-xl mb-6">
                                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Original Request</h4>
-                                <p className="text-gray-300 text-sm whitespace-pre-wrap"><Linkify text={selectedTicket.message} /></p>
+                                <p className="text-gray-300 text-sm whitespace-pre-wrap"><MessageContent text={selectedTicket.message} attachments={selectedTicket.attachments} /></p>
                             </div>
 
                             {selectedTicket.messages?.map((msg, i) => (
