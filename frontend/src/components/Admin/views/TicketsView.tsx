@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { Ticket, Lock, Loader2, Trash2, RefreshCw } from 'lucide-react';
+import { Ticket, Lock, Loader2, Trash2, RefreshCw, Paperclip, AlertOctagon } from 'lucide-react';
 
 interface ITicket {
     _id: string;
@@ -20,6 +20,24 @@ interface ITicket {
     assignedTo?: { _id: string, username: string };
 }
 
+const Linkify = ({ text }: { text: string }) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return (
+        <>
+            {parts.map((part, i) =>
+                urlRegex.test(part) ? (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                        {part}
+                    </a>
+                ) : (
+                    part
+                )
+            )}
+        </>
+    );
+};
+
 export const TicketsView: React.FC = () => {
     const [tickets, setTickets] = useState<ITicket[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,6 +46,7 @@ export const TicketsView: React.FC = () => {
     const [reply, setReply] = useState('');
     const lastTicketsRef = useRef<string>('');
     const { user: currentUser } = useAuth();
+    const chatContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchTickets();
@@ -36,21 +55,43 @@ export const TicketsView: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [selectedTicket?.messages]);
+
     const fetchTickets = async () => {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.get(`${API_URL}/admin/tickets`, { headers: { Authorization: `Bearer ${token}` } });
 
-            const strData = JSON.stringify(res.data);
+            // Sort: Escalated Open > Open > In Progress > Closed
+            // Then by Last Message or Created At
+            const sortedTickets = (res.data as ITicket[]).sort((a, b) => {
+                if (a.escalated && !b.escalated) return -1;
+                if (!a.escalated && b.escalated) return 1;
+
+                // Priority to open tickets
+                // ... logic handled by backend mainly, but let's refine here if needed
+                return new Date(b.lastMessageAt || b.createdAt).getTime() - new Date(a.lastMessageAt || a.createdAt).getTime();
+            });
+
+            const strData = JSON.stringify(sortedTickets);
             if (strData !== lastTicketsRef.current) {
-                setTickets(res.data);
+                setTickets(sortedTickets);
                 lastTicketsRef.current = strData;
 
                 // Update selected ticket if open
                 if (selectedTicket) {
-                    const updated = res.data.find((t: ITicket) => t._id === selectedTicket._id);
-                    if (updated && JSON.stringify(updated.messages) !== JSON.stringify(selectedTicket.messages)) {
-                        setSelectedTicket(updated);
+                    const updated = sortedTickets.find((t: ITicket) => t._id === selectedTicket._id);
+                    if (updated) {
+                        // Only update if messages changed or status changed to avoid UI jitter
+                        if (JSON.stringify(updated.messages) !== JSON.stringify(selectedTicket.messages) ||
+                            updated.status !== selectedTicket.status ||
+                            updated.allowAttachments !== selectedTicket.allowAttachments) {
+                            setSelectedTicket(updated);
+                        }
                     }
                 }
             }
@@ -78,8 +119,8 @@ export const TicketsView: React.FC = () => {
                 { managerId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            const updated = { ...selectedTicket!, assignedTo: res.data.assignedTo };
-            setTickets(prev => prev.map(t => t._id === ticketId ? { ...t, assignedTo: res.data.assignedTo } : t));
+            const updated = { ...selectedTicket!, assignedTo: res.data.assignedTo, escalated: res.data.escalated }; // Update escalated status too
+            setTickets(prev => prev.map(t => t._id === ticketId ? updated : t));
             setSelectedTicket(updated);
         } catch (err) {
             console.error("Failed to assign", err);
@@ -145,13 +186,27 @@ export const TicketsView: React.FC = () => {
                 { userId: selectedTicket.user._id },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            const link = `${window.location.origin}/?token=${res.data.token}`;
+            const link = `${window.location.origin}/secure-edit?token=${res.data.token}`;
 
             // Auto-paste link into reply
             setReply(prev => `${prev ? prev + '\n' : ''}Here is a temporary secure link to edit your profile: ${link} (valid for 15 mins)`);
         } catch (err) {
             console.error(err);
             alert('Failed to generate grant link');
+        }
+    };
+
+    const handleToggleUpload = async () => {
+        if (!selectedTicket) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${API_URL}/manager/tickets/${selectedTicket._id}/toggle-upload`, {}, { headers: { Authorization: `Bearer ${token}` } });
+
+            setSelectedTicket(prev => prev ? { ...prev, allowAttachments: res.data.allowAttachments } : null);
+            setTickets(prev => prev.map(t => t._id === selectedTicket._id ? { ...t, allowAttachments: res.data.allowAttachments } : t));
+        } catch (err) {
+            console.error(err);
+            alert('Failed to toggle upload permission');
         }
     };
 
@@ -172,8 +227,11 @@ export const TicketsView: React.FC = () => {
                             className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedTicket?._id === ticket._id ? 'bg-white/5 border-l-2 border-l-blue-500' : ''}`}
                         >
                             <div className="flex justify-between items-start mb-1">
-                                <h4 className={`font-bold text-sm line-clamp-1 ${ticket.status === 'closed' ? 'text-gray-500' : 'text-gray-200'}`}>{ticket.subject}</h4>
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${ticket.status === 'open' ? 'bg-green-500/10 text-green-500' :
+                                <div className="flex items-center gap-1.5 overflow-hidden">
+                                    {ticket.escalated && <AlertOctagon className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                                    <h4 className={`font-bold text-sm line-clamp-1 ${ticket.status === 'closed' ? 'text-gray-500' : 'text-gray-200'}`}>{ticket.subject}</h4>
+                                </div>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold flex-shrink-0 ml-2 ${ticket.status === 'open' ? 'bg-green-500/10 text-green-500' :
                                     ticket.status === 'closed' ? 'bg-gray-500/10 text-gray-500' : 'bg-blue-500/10 text-blue-500'
                                     }`}>
                                     {ticket.status}
@@ -182,7 +240,10 @@ export const TicketsView: React.FC = () => {
                             <p className="text-xs text-gray-500 line-clamp-2 mb-2">{ticket.message}</p>
                             <div className="flex justify-between items-center text-[10px] text-gray-600">
                                 <span>{ticket.user?.username || 'User'}</span>
-                                <span>{new Date(ticket.lastMessageAt || ticket.createdAt).toLocaleDateString()}</span>
+                                <div>
+                                    {ticket.assignedTo && <span className="text-blue-400 mr-2">@{ticket.assignedTo.username}</span>}
+                                    <span>{new Date(ticket.lastMessageAt || ticket.createdAt).toLocaleDateString()}</span>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -194,15 +255,32 @@ export const TicketsView: React.FC = () => {
                 {selectedTicket ? (
                     <>
                         <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#1a1d24]">
-                            <div>
-                                <h2 className="text-lg font-bold">{selectedTicket.subject}</h2>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <span>#{selectedTicket._id.slice(-6)}</span>
-                                    <span>•</span>
-                                    <span>{selectedTicket.user?.email || 'No Email'}</span>
+                            <div className="flex items-center gap-3">
+                                <div>
+                                    <h2 className="text-lg font-bold flex items-center gap-2">
+                                        {selectedTicket.subject}
+                                        {selectedTicket.escalated && <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full">PRIORITY</span>}
+                                    </h2>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                        <span>#{selectedTicket._id.slice(-6)}</span>
+                                        <span>•</span>
+                                        <span>{selectedTicket.user?.email || 'No Email'}</span>
+                                    </div>
                                 </div>
                             </div>
+
                             <div className="flex gap-2 items-center">
+                                {/* Toggle Upload Button */}
+                                {currentUser?.role !== 'user' && (
+                                    <button
+                                        onClick={handleToggleUpload}
+                                        title={selectedTicket.allowAttachments ? "Disable Uploads" : "Allow File Uploads"}
+                                        className={`p-2 rounded-lg transition-colors ${selectedTicket.allowAttachments ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-gray-700/50 text-gray-400 border border-transparent'}`}
+                                    >
+                                        <Paperclip className="w-4 h-4" />
+                                    </button>
+                                )}
+
                                 {currentUser?.role !== 'admin' && (
                                     <div className="flex items-center gap-2 bg-[#20232a] p-1 rounded-lg border border-white/10">
                                         <span className="text-[10px] uppercase font-bold text-gray-500 pl-1">Assign</span>
@@ -244,10 +322,10 @@ export const TicketsView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar" ref={chatContainerRef}>
                             <div className="bg-[#1a1d24] border border-white/5 p-4 rounded-xl mb-6">
                                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Original Request</h4>
-                                <p className="text-gray-300 text-sm">{selectedTicket.message}</p>
+                                <p className="text-gray-300 text-sm whitespace-pre-wrap"><Linkify text={selectedTicket.message} /></p>
                             </div>
 
                             {selectedTicket.messages?.map((msg, i) => (
@@ -257,7 +335,7 @@ export const TicketsView: React.FC = () => {
                                             ? 'bg-blue-600 text-white rounded-tr-sm'
                                             : 'bg-[#1a1d24] border border-white/5 text-gray-200 rounded-tl-sm'
                                             }`}>
-                                            {msg.message}
+                                            <div className="whitespace-pre-wrap"><Linkify text={msg.message} /></div>
                                         </div>
                                         <span className="text-[10px] text-gray-600 mt-1 px-1">
                                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.sender === 'agent' ? 'Admin' : 'User'}
