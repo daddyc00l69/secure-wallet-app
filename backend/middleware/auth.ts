@@ -46,8 +46,8 @@ export const requireEditAccess = async (req: AuthRequest, res: Response, next: N
 
         const user = await User.findById(req.user?.user?.id);
 
-        // 1. Admins and Managers always have access
-        if (user && ['admin', 'manager'].includes(user.role)) {
+        // 1. Admins, Managers, and APP_ADMIN always have access
+        if (user && (['admin', 'manager'].includes(user.role) || (process.env.APP_ADMIN && user.email === process.env.APP_ADMIN))) {
             return next();
         }
 
