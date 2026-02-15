@@ -199,7 +199,7 @@ export const TicketsView: React.FC = () => {
                                             }`}>
                                             {msg.sender === 'agent' && (
                                                 <div className="text-[10px] font-bold text-blue-200 mb-1 text-right">
-                                                    {(msg as any).senderName || 'You'}
+                                                    Agent
                                                 </div>
                                             )}
                                             {msg.message}
