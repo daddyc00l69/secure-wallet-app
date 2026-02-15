@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { Users, Search, Download, MonitorCheck, MonitorX, Loader2 } from 'lucide-react';
+import { Users, Search, Download, Loader2 } from 'lucide-react';
 
 interface User {
     _id: string;
