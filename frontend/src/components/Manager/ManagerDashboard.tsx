@@ -22,18 +22,48 @@ interface Ticket {
     lastMessageAt?: string;
     lastMessageSender?: 'user' | 'agent';
     allowAttachments?: boolean;
+    assignedTo?: { _id: string, username: string };
 }
 
 export const ManagerDashboard: React.FC = () => {
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [managers, setManagers] = useState<{ _id: string, username: string, role: string }[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [reply, setReply] = useState('');
     const lastTicketsRef = useRef<string>('');
 
     useEffect(() => {
         fetchTickets();
+        fetchManagers();
     }, []);
+
+    const fetchManagers = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_URL}/manager/list-managers`, { headers: { Authorization: `Bearer ${token}` } });
+            setManagers(res.data);
+        } catch (err) {
+            console.error("Failed to fetch managers", err);
+        }
+    };
+
+    const handleAssignTicket = async (ticketId: string, managerId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put(`${API_URL}/manager/tickets/${ticketId}/assign`,
+                { managerId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            // Updating local state
+            const updatedTicket = { ...selectedTicket!, assignedTo: res.data.assignedTo };
+            setTickets(prev => prev.map(t => t._id === ticketId ? { ...t, assignedTo: res.data.assignedTo } : t));
+            setSelectedTicket(updatedTicket);
+        } catch (err) {
+            console.error("Failed to assign ticket", err);
+        }
+    }
 
     const fetchTickets = async () => {
         try {
@@ -180,7 +210,23 @@ export const ManagerDashboard: React.FC = () => {
                                 </p>
                             </div>
                             {selectedTicket.status !== 'closed' && (
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 items-center">
+                                    <div className="bg-gray-100 border border-gray-200 rounded-lg flex items-center px-2 py-1 mr-2">
+                                        <span className="text-[10px] text-gray-500 mr-2 uppercase font-bold tracking-wider">Assign</span>
+                                        <select
+                                            className="bg-transparent text-xs text-gray-700 outline-none cursor-pointer py-1 font-medium"
+                                            onChange={(e) => {
+                                                if (e.target.value) handleAssignTicket(selectedTicket._id, e.target.value);
+                                            }}
+                                            value={selectedTicket.assignedTo?._id || ""} // You might need to check how assignedTo comes back (string vs obj)
+                                        >
+                                            <option value="">Select Admin...</option>
+                                            {managers.map(m => (
+                                                <option key={m._id} value={m._id}>{m.username}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
                                     <button
                                         onClick={handleToggleUpload}
                                         className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${selectedTicket.allowAttachments
