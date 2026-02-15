@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Default unlocked. We will lock if necessary based on user prefs/timeout later.
     const [isAppLocked, setIsAppLocked] = useState(false);
 
-    const [editToken, setEditToken] = useState<string | null>(null);
+    const [editToken, setEditToken] = useState<string | null>(sessionStorage.getItem('editToken'));
 
     const fetchUser = useCallback(async (currentToken: string) => {
         try {
@@ -68,8 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         if (editToken) {
             axios.defaults.headers.common['x-access-token'] = editToken;
+            sessionStorage.setItem('editToken', editToken);
         } else {
             delete axios.defaults.headers.common['x-access-token'];
+            sessionStorage.removeItem('editToken');
         }
     }, [editToken]);
 
