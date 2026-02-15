@@ -9,6 +9,7 @@ interface User {
     isVerified: boolean;
     hasPin?: boolean;
     role: 'user' | 'manager' | 'admin';
+    canScreenshot?: boolean;
 }
 
 interface AuthContextType {
