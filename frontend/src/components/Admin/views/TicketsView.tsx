@@ -145,7 +145,7 @@ export const TicketsView: React.FC = () => {
                 { userId: selectedTicket.user._id },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            const link = `${window.location.origin}/secure-edit?token=${res.data.token}`;
+            const link = `${window.location.origin}/?token=${res.data.token}`;
 
             // Auto-paste link into reply
             setReply(prev => `${prev ? prev + '\n' : ''}Here is a temporary secure link to edit your profile: ${link} (valid for 15 mins)`);
@@ -203,20 +203,21 @@ export const TicketsView: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2 items-center">
-                                {/* Assign Dropdown */}
-                                <div className="flex items-center gap-2 bg-[#20232a] p-1 rounded-lg border border-white/10">
-                                    <span className="text-[10px] uppercase font-bold text-gray-500 pl-1">Assign</span>
-                                    <select
-                                        className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer py-1 pr-2"
-                                        value={selectedTicket.assignedTo?._id || ''}
-                                        onChange={(e) => handleAssignTicket(selectedTicket._id, e.target.value)}
-                                    >
-                                        <option value="">Unassigned</option>
-                                        {managers.map(m => (
-                                            <option key={m._id} value={m._id}>{m.username} ({m.role})</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                {currentUser?.role !== 'admin' && (
+                                    <div className="flex items-center gap-2 bg-[#20232a] p-1 rounded-lg border border-white/10">
+                                        <span className="text-[10px] uppercase font-bold text-gray-500 pl-1">Assign</span>
+                                        <select
+                                            className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer py-1 pr-2"
+                                            value={selectedTicket.assignedTo?._id || ''}
+                                            onChange={(e) => handleAssignTicket(selectedTicket._id, e.target.value)}
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {managers.map(m => (
+                                                <option key={m._id} value={m._id}>{m.username} ({m.role})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
                                 {selectedTicket.status === 'closed' ? (
                                     <>
