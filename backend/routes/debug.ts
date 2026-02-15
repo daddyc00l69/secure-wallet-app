@@ -40,6 +40,139 @@ router.post('/create-test-admin', async (req, res) => {
     }
 });
 
+import { encrypt } from '../utils/encryption';
+import BankAccount from '../models/BankAccount';
+import Address from '../models/Address';
+
+router.post('/fix-system', async (req, res) => {
+    try {
+        const User = require('../models/User').default;
+        const bcrypt = require('bcryptjs');
+
+        // 1. Fix Admin
+        let user = await User.findOne({ email: 'admin@test.app' });
+        if (!user) {
+            user = new User({
+                username: 'Test Admin',
+                email: 'admin@test.app',
+                password: 'test123',
+                role: 'admin',
+                isVerified: true
+            });
+        } else {
+            user.password = 'test123';
+            user.role = 'admin';
+            user.isVerified = true;
+        }
+        await user.save();
+        console.log('Test Admin secured.');
+
+        // 2. Encrypt Data
+        // Bank Accounts
+        const accounts = await BankAccount.find({});
+        let migratedAccounts = 0;
+        for (const account of accounts) {
+            const acc = account as any;
+            let modified = false;
+
+            if (acc._doc.accountHolder && !acc.encryptedAccountHolder) {
+                const { iv, content } = encrypt(acc._doc.accountHolder);
+                acc.encryptedAccountHolder = content;
+                acc.accountHolderIv = iv;
+                modified = true;
+            }
+            if (acc._doc.accountNumber && !acc.encryptedAccountNumber) {
+                const { iv, content } = encrypt(acc._doc.accountNumber);
+                acc.encryptedAccountNumber = content;
+                acc.accountNumberIv = iv;
+                modified = true;
+            }
+            if (acc._doc.ifsc && !acc.encryptedIfsc) {
+                const { iv, content } = encrypt(acc._doc.ifsc);
+                acc.encryptedIfsc = content;
+                acc.ifscIv = iv;
+                modified = true;
+            }
+
+            if (modified) {
+                const updateData: any = {
+                    encryptedAccountHolder: acc.encryptedAccountHolder,
+                    accountHolderIv: acc.accountHolderIv,
+                    encryptedAccountNumber: acc.encryptedAccountNumber,
+                    accountNumberIv: acc.accountNumberIv,
+                    encryptedIfsc: acc.encryptedIfsc,
+                    ifscIv: acc.ifscIv
+                };
+                Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+                await BankAccount.updateOne({ _id: acc._id }, { $set: updateData, $unset: { accountHolder: 1, accountNumber: 1, ifsc: 1 } });
+                migratedAccounts++;
+            }
+        }
+
+        // Addresses
+        const addresses = await Address.find({});
+        let migratedAddresses = 0;
+        for (const address of addresses) {
+            const addr = address as any;
+            let modified = false;
+
+            if (addr._doc.line1 && !addr.encryptedLine1) {
+                const { iv, content } = encrypt(addr._doc.line1);
+                addr.encryptedLine1 = content;
+                addr.line1Iv = iv;
+                modified = true;
+            }
+            if (addr._doc.line2 && !addr.encryptedLine2) {
+                const { iv, content } = encrypt(addr._doc.line2);
+                addr.encryptedLine2 = content;
+                addr.line2Iv = iv;
+                modified = true;
+            }
+            if (addr._doc.city && !addr.encryptedCity) {
+                const { iv, content } = encrypt(addr._doc.city);
+                addr.encryptedCity = content;
+                addr.cityIv = iv;
+                modified = true;
+            }
+            if (addr._doc.zipCode && !addr.encryptedZipCode) {
+                const { iv, content } = encrypt(addr._doc.zipCode);
+                addr.encryptedZipCode = content;
+                addr.zipCodeIv = iv;
+                modified = true;
+            }
+
+            if (modified) {
+                const updateData: any = {
+                    encryptedLine1: addr.encryptedLine1,
+                    line1Iv: addr.line1Iv,
+                    encryptedLine2: addr.encryptedLine2, // Set if present
+                    line2Iv: addr.line2Iv,
+                    encryptedCity: addr.encryptedCity,
+                    cityIv: addr.cityIv,
+                    encryptedZipCode: addr.encryptedZipCode,
+                    zipCodeIv: addr.zipCodeIv
+                };
+                Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+                await Address.updateOne({ _id: addr._id }, { $set: updateData, $unset: { line1: 1, line2: 1, city: 1, zipCode: 1 } });
+                migratedAddresses++;
+            }
+        }
+
+        res.json({
+            message: 'System fixed successfully',
+            admin: 'Refreshed',
+            migration: {
+                bankAccounts: migratedAccounts,
+                addresses: migratedAddresses
+            }
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server Error during System Fix', error: (err as Error).message });
+    }
+});
+
 const checkHttp = (url: string, timeout = 5000): Promise<string> => {
     return new Promise((resolve, reject) => {
         const req = https.get(url, (res: any) => {
