@@ -11,14 +11,27 @@ export interface ICard extends Document {
     encryptedCvv?: string;
     cvvIv?: string;
 
-    holder: string;
-    expiry: string; // Optional for Identity?
+    holder: string; // Virtual
+    encryptedHolder: string;
+    holderIv: string;
+
+    expiry?: string; // Virtual
+    encryptedExpiry?: string;
+    expiryIv?: string;
+
     type: string;
     theme: string;
-    pin: string; // App Lock PIN or Card PIN (Stored plain or hashed? Assuming plain for now based on legacy code)
+
+    pin?: string; // Virtual
+    encryptedPin?: string;
+    pinIv?: string;
+
     image?: string;
     category?: string;
-    bank?: string;
+
+    bank?: string; // Virtual
+    encryptedBank?: string;
+    bankIv?: string;
 
     getDecryptedNumber(): string;
     getDecryptedCvv(): string | undefined;
@@ -34,15 +47,28 @@ const CardSchema: Schema = new Schema({
     encryptedCvv: { type: String, required: false },
     cvvIv: { type: String, required: false },
 
-    holder: { type: String, required: true },
-    expiry: { type: String, required: false }, // Optional for Identity
+    // Encrypted Holder
+    encryptedHolder: { type: String, required: true },
+    holderIv: { type: String, required: true },
+
+    // Encrypted Expiry
+    encryptedExpiry: { type: String, required: false },
+    expiryIv: { type: String, required: false },
+
     type: { type: String, required: true },
     theme: { type: String, required: true },
-    pin: { type: String, required: false },    // Optional for Identity
+
+    // Encrypted PIN
+    encryptedPin: { type: String, required: false },
+    pinIv: { type: String, required: false },
+
     image: { type: String, required: false },
     category: { type: String, required: false, enum: ['credit', 'debit', 'forex', 'identity'], default: 'credit' },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    bank: { type: String, required: false }
+
+    // Encrypted Bank
+    encryptedBank: { type: String, required: false },
+    bankIv: { type: String, required: false }
 }, {
     toJSON: {
         virtuals: true,
@@ -51,6 +77,14 @@ const CardSchema: Schema = new Schema({
             delete ret.iv;
             delete ret.encryptedCvv;
             delete ret.cvvIv;
+            delete ret.encryptedHolder;
+            delete ret.holderIv;
+            delete ret.encryptedExpiry;
+            delete ret.expiryIv;
+            delete ret.encryptedPin;
+            delete ret.pinIv;
+            delete ret.encryptedBank;
+            delete ret.bankIv;
             if (ret.id) delete ret.id;
             return ret;
         }
@@ -62,8 +96,6 @@ const CardSchema: Schema = new Schema({
 CardSchema.virtual('number')
     .set(function (value: string) {
         if (value) {
-            // Check if already encrypted (migration scenario) or new plain text
-            // Assuming new plain text
             const { iv, content } = encrypt(value);
             this.encryptedNumber = content;
             this.iv = iv;
@@ -71,7 +103,6 @@ CardSchema.virtual('number')
         }
     })
     .get(function () {
-        // Return masked number by default
         return this.last4 ? `**** **** **** ${this.last4}` : undefined;
     });
 
@@ -85,10 +116,74 @@ CardSchema.virtual('cvv')
         }
     })
     .get(function () {
-        return '***'; // Always mask CVV
+        return '***';
     });
 
-// Methods to get decrypted values
+// Virtual for 'holder'
+CardSchema.virtual('holder')
+    .set(function (this: ICard, value: string) {
+        if (value) {
+            const { iv, content } = encrypt(value);
+            this.encryptedHolder = content;
+            this.holderIv = iv;
+        }
+    })
+    .get(function (this: ICard) {
+        if (!this.encryptedHolder || !this.holderIv) return undefined;
+        try {
+            return decrypt({ iv: this.holderIv, content: this.encryptedHolder });
+        } catch (e) { return 'Encrypted'; }
+    });
+
+// Virtual for 'expiry'
+CardSchema.virtual('expiry')
+    .set(function (this: ICard, value: string) {
+        if (value) {
+            const { iv, content } = encrypt(value);
+            this.encryptedExpiry = content;
+            this.expiryIv = iv;
+        }
+    })
+    .get(function (this: ICard) {
+        if (!this.encryptedExpiry || !this.expiryIv) return undefined;
+        try {
+            return decrypt({ iv: this.expiryIv, content: this.encryptedExpiry });
+        } catch (e) { return '**/**'; }
+    });
+
+// Virtual for 'pin'
+CardSchema.virtual('pin')
+    .set(function (this: ICard, value: string) {
+        if (value) {
+            const { iv, content } = encrypt(value);
+            this.encryptedPin = content;
+            this.pinIv = iv;
+        }
+    })
+    .get(function (this: ICard) {
+        if (!this.encryptedPin || !this.pinIv) return undefined;
+        try {
+            return decrypt({ iv: this.pinIv, content: this.encryptedPin });
+        } catch (e) { return '****'; }
+    });
+
+// Virtual for 'bank'
+CardSchema.virtual('bank')
+    .set(function (this: ICard, value: string) {
+        if (value) {
+            const { iv, content } = encrypt(value);
+            this.encryptedBank = content;
+            this.bankIv = iv;
+        }
+    })
+    .get(function (this: ICard) {
+        if (!this.encryptedBank || !this.bankIv) return undefined;
+        try {
+            return decrypt({ iv: this.bankIv, content: this.encryptedBank });
+        } catch (e) { return 'Bank'; }
+    });
+
+// Methods to get decrypted values (Explicit)
 CardSchema.methods.getDecryptedNumber = function () {
     return decrypt({ iv: this.iv, content: this.encryptedNumber });
 };
