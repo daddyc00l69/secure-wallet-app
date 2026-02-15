@@ -136,6 +136,8 @@ export const UsersView: React.FC = () => {
                                             try {
                                                 const token = localStorage.getItem('token');
                                                 const newValue = !user.canScreenshot;
+                                                // Assuming endpoint is /admin/users/:id/permissions or similar.
+                                                // The previous code used /admin/users/:id/permissions
                                                 await axios.put(`${API_URL}/admin/users/${user._id}/permissions`,
                                                     { canScreenshot: newValue },
                                                     { headers: { Authorization: `Bearer ${token}` } }
@@ -145,10 +147,15 @@ export const UsersView: React.FC = () => {
                                                 alert('Failed to update permission');
                                             }
                                         }}
-                                        className={`p-1.5 rounded-lg text-xs font-bold border ${user.canScreenshot ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'}`}
+                                        className={`p-2 rounded-lg text-xs font-bold border transition-all ${user.canScreenshot
+                                            ? 'bg-green-500/10 text-green-400 border-green-500/50 hover:bg-green-500/20'
+                                            : 'bg-red-500/10 text-red-400 border-red-500/50 hover:bg-red-500/20'}`}
                                         title={user.canScreenshot ? "Screenshots Allowed" : "Screenshots Blocked"}
                                     >
-                                        {user.canScreenshot ? <MonitorCheck className="w-4 h-4" /> : <MonitorX className="w-4 h-4" />}
+                                        <div className="flex items-center gap-1">
+                                            {user.canScreenshot ? <MonitorCheck className="w-4 h-4" /> : <MonitorX className="w-4 h-4" />}
+                                            <span>{user.canScreenshot ? 'Allowed' : 'Blocked'}</span>
+                                        </div>
                                     </button>
 
                                     {user.role === 'manager' && (
