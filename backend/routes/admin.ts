@@ -31,6 +31,10 @@ router.get('/analytics', auth, authorize(['admin']), async (req: AuthRequest, re
 // Invite Manager (Admin only)
 router.post('/invite-manager', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
     console.log(`[Invite Manager] Request received for: ${req.body.email}`);
+    if (req.user?.user?.email === 'admin@test.app') {
+        res.status(403).json({ message: 'Action restricted for Test Admin' });
+        return;
+    }
     try {
         const { email } = req.body;
 
@@ -96,6 +100,10 @@ router.get('/managers', auth, authorize(['admin']), async (req: AuthRequest, res
 router.delete('/tickets/:id', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
     const ticketId = req.params['id'] as string;
     console.log(`[Delete Ticket] Request received for ID: ${ticketId}`);
+    if (req.user?.user?.email === 'admin@test.app') {
+        res.status(403).json({ message: 'Action restricted for Test Admin' });
+        return;
+    }
     try {
         if (!ticketId?.match(/^[0-9a-fA-F]{24}$/)) {
             console.log(`[Delete Ticket] Invalid ID format: ${ticketId}`);
@@ -148,6 +156,10 @@ router.get('/users', auth, authorize(['admin']), async (req: AuthRequest, res: R
 
 // Update User Role (Admin only)
 router.put('/users/:id/role', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+    if (req.user?.user?.email === 'admin@test.app') {
+        res.status(403).json({ message: 'Action restricted for Test Admin' });
+        return;
+    }
     try {
         const { role } = req.body;
         if (!['user', 'manager', 'admin'].includes(role)) {
@@ -173,6 +185,10 @@ router.put('/users/:id/role', auth, authorize(['admin']), async (req: AuthReques
 
 // Update User Permissions (Admin only)
 router.put('/users/:id/permissions', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+    if (req.user?.user?.email === 'admin@test.app') {
+        res.status(403).json({ message: 'Action restricted for Test Admin' });
+        return;
+    }
     try {
         const { canScreenshot } = req.body;
         const user = await User.findById(req.params.id);
