@@ -15,7 +15,6 @@ import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { ManagerDashboard } from './components/Manager/ManagerDashboard';
 import { ManagerSetupPage } from './components/Auth/ManagerSetupPage';
 import { SecureEditPage } from './components/Auth/SecureEditPage';
-import { SecureEditPage } from './components/Auth/SecureEditPage';
 
 // Protected Route Component
 const RequireAuth = ({ children, role }: { children: React.ReactElement, role?: 'admin' | 'manager' }) => {
