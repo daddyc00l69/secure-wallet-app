@@ -10,7 +10,7 @@ interface Ticket {
     message: string;
     type: 'card_variant' | 'support' | 'bug';
     status: 'open' | 'closed' | 'in_progress';
-    messages?: { sender: 'user' | 'agent', message: string, timestamp: string }[];
+    messages?: { sender: 'user' | 'agent', senderName?: string, message: string, timestamp: string }[];
     lastMessageAt?: string;
     lastMessageSender?: 'user' | 'agent';
     createdAt: string;
@@ -105,6 +105,37 @@ export const HelpPage: React.FC = () => {
             setError(err.response?.data?.message || 'Failed to reopen ticket');
         }
     };
+
+    // Poll for updates (Real-time chat)
+    useEffect(() => {
+        if (!selectedTicket || selectedTicket.status === 'closed') return;
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const token = localStorage.getItem('token');
+                // We fetch all tickets to update the list status as well, 
+                // but ideally we'd just fetch the single ticket messages.
+                // For simplicity and to keep list updated (e.g. status change), we fetch all.
+                // If performance is an issue, we can optimize later.
+                const res = await axios.get(`${API_URL}/support`, { headers: { Authorization: `Bearer ${token}` } });
+                setTickets(res.data);
+
+                // Update selected ticket if it exists
+                const updatedSelected = res.data.find((t: any) => t._id === selectedTicket._id);
+                if (updatedSelected) {
+                    // Only update if messages changed to avoid jitter? React diffing handles this usually.
+                    // But to avoid typing interruption strictly we might check length.
+                    if (updatedSelected.messages.length !== selectedTicket.messages?.length || updatedSelected.status !== selectedTicket.status) {
+                        setSelectedTicket(updatedSelected);
+                    }
+                }
+            } catch (err) {
+                console.error('Polling error', err);
+            }
+        }, 3000); // 3 seconds
+
+        return () => clearInterval(pollInterval);
+    }, [selectedTicket]);
 
     const handleReplyTicket = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -446,20 +477,25 @@ export const HelpPage: React.FC = () => {
                                             {selectedTicket.messages?.map((msg, i) => (
                                                 <div key={i} className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                                     {msg.sender === 'agent' && (
-                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                            <MessageCircle className="w-4 h-4 text-blue-600" />
+                                                        <div className="flex-shrink-0 flex flex-col items-center">
+                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-lg">
+                                                                {(msg as any).senderName ? (msg as any).senderName.charAt(0).toUpperCase() : 'A'}
+                                                            </div>
                                                         </div>
                                                     )}
-                                                    <div className={`max-w-[80%] space-y-1 ${msg.sender === 'user' ? 'items-end flex flex-col' : 'items-start flex flex-col'}`}>
-                                                        <div className={`p-4 rounded-2xl shadow-sm text-sm ${msg.sender === 'user'
-                                                            ? 'bg-blue-600 text-white rounded-tr-none'
-                                                            : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
-                                                            }`}>
-                                                            {msg.message}
+                                                    <div className={`p-3 rounded-2xl max-w-[80%] text-sm shadow-md ${msg.sender === 'user'
+                                                        ? 'bg-blue-600 text-white rounded-tr-none'
+                                                        : 'bg-white text-gray-900 rounded-tl-none border border-gray-100'
+                                                        }`}>
+                                                        {msg.sender === 'agent' && (
+                                                            <div className="text-[10px] font-bold text-purple-600 mb-1">
+                                                                {(msg as any).senderName || 'Support Agent'}
+                                                            </div>
+                                                        )}
+                                                        {msg.message}
+                                                        <div className={`text-[10px] mt-1 text-right ${msg.sender === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                                                            {(msg as any).timestamp ? new Date((msg as any).timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                                         </div>
-                                                        <span className="text-[10px] text-gray-400 px-1">
-                                                            {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
