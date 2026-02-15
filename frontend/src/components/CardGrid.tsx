@@ -27,8 +27,8 @@ export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revea
                         card={card}
                         showCvv={revealedCardId === card._id}
                         showNumber={revealedNumberCardId === card._id}
-                        revealedNumber={revealedCardsMap[card._id]?.number}
-                        revealedCvv={revealedCardsMap[card._id]?.cvv}
+                        revealedNumber={card._id ? revealedCardsMap?.[card._id]?.number : undefined}
+                        revealedCvv={card._id ? revealedCardsMap?.[card._id]?.cvv : undefined}
                         onViewCvv={() => onViewCvv && onViewCvv(card)}
                         onViewNumber={() => onViewNumber && onViewNumber(card)}
                     />
