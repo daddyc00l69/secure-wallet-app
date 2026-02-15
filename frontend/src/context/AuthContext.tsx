@@ -25,6 +25,7 @@ interface AuthContextType {
     lockApp: () => void;
     editToken: string | null;
     setEditToken: (token: string | null) => void;
+    permissions: { canAdd: boolean, canEdit: boolean, canDelete: boolean } | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,18 +38,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isAppLocked, setIsAppLocked] = useState(false);
 
     const [editToken, setEditToken] = useState<string | null>(sessionStorage.getItem('editToken'));
+    const [permissions, setPermissions] = useState<{ canAdd: boolean, canEdit: boolean, canDelete: boolean } | null>(null);
 
     const fetchUser = useCallback(async (currentToken: string) => {
         try {
             axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
-            // If editToken exists, add it to headers
-            // We need to do this carefully not to lose it on refresh if we don't persist it.
-            // For now, let's just set it if state has it.
-            // Actually, we should check if we persist it? The plan said URL param.
-            // So the Dashboard will call setEditToken.
             const res = await axios.get(`${API_URL}/auth/me`);
             setUser(res.data);
-            // If user has no PIN, ensure app is unlocked
             if (!res.data.hasPin) {
                 setIsAppLocked(false);
             }
@@ -64,14 +60,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    // Effect to update headers when editToken changes
+    // Effect to update headers and fetch permissions when editToken changes
     useEffect(() => {
         if (editToken) {
             axios.defaults.headers.common['x-access-token'] = editToken;
             sessionStorage.setItem('editToken', editToken);
+
+            // Fetch Permissions
+            axios.post(`${API_URL}/access/verify`, { token: editToken })
+                .then(res => {
+                    if (res.data.valid && res.data.permissions) {
+                        setPermissions(res.data.permissions);
+                    }
+                })
+                .catch(() => setPermissions(null));
         } else {
             delete axios.defaults.headers.common['x-access-token'];
             sessionStorage.removeItem('editToken');
+            setPermissions(null);
         }
     }, [editToken]);
 
@@ -88,7 +94,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = (newToken: string) => {
         localStorage.setItem('token', newToken);
         setToken(newToken);
-        // On explicit login, we don't need to lock immediately
         setIsAppLocked(false);
     };
 
@@ -126,7 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             unlockApp,
             lockApp,
             editToken,
-            setEditToken
+            setEditToken,
+            permissions
         }}>
             {children}
         </AuthContext.Provider>
