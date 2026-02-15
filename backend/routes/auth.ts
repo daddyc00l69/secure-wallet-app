@@ -127,7 +127,7 @@ router.post('/verify-otp', async (req, res) => {
         await sendWelcomeEmail(user.email, user.username);
 
         const payload = { user: { id: user.id } };
-        jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' }, (err, token) => {
+        jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' }, (err, token) => {
             if (err) throw err;
             res.json({ token });
         });
@@ -174,7 +174,7 @@ router.post('/login', async (req, res) => {
         }
 
         const payload = { user: { id: user.id } };
-        jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' }, (err, token) => {
+        jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' }, (err, token) => {
             if (err) throw err;
             res.json({ token, user: { id: user.id, username: user.username, email: user.email, isVerified: user.isVerified } });
         });
