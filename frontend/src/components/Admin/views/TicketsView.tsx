@@ -398,7 +398,7 @@ export const TicketsView: React.FC = () => {
                                             ? 'bg-blue-600 text-white rounded-tr-sm'
                                             : 'bg-[#1a1d24] border border-white/5 text-gray-200 rounded-tl-sm'
                                             }`}>
-                                            <div className="whitespace-pre-wrap"><Linkify text={msg.message} /></div>
+                                            <div className="whitespace-pre-wrap"><MessageContent text={msg.message} attachments={selectedTicket.attachments} /></div>
                                         </div>
                                         <span className="text-[10px] text-gray-600 mt-1 px-1">
                                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.sender === 'agent' ? 'Admin' : 'User'}
