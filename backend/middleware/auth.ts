@@ -40,37 +40,6 @@ export const authorize = (roles: string[]) => {
 };
 
 export const requireEditAccess = async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try {
-        const User = require('../models/User').default;
-        const TempAccess = require('../models/TempAccess').default;
-
-        const user = await User.findById(req.user?.user?.id);
-
-        // 1. Admins, Managers, and APP_ADMIN always have access
-        if (user && (['admin', 'manager'].includes(user.role) || (process.env.APP_ADMIN && user.email === process.env.APP_ADMIN))) {
-            return next();
-        }
-
-        // 2. Check for Access Token in Headers
-        const token = req.header('x-access-token');
-        if (!token) {
-            return res.status(403).json({ message: 'Edit access required. Please request access from support.' });
-        }
-
-        const access = await TempAccess.findOne({ token, userId: user._id, used: false });
-        if (!access || access.expiresAt < new Date()) {
-            return res.status(403).json({ message: 'Access link expired or invalid.' });
-        }
-
-        // 3. Optional: Auto-consume token here? 
-        // The user might need to make multiple save requests (e.g. save profile, then save card).
-        // Let's keep it valid until expiry or explicit consume.
-        // For "only one time", we could mark used AFTER the action in the controller. 
-        // But for now, let's just allow it for the duration of the session/token (15m).
-
-        next();
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error checking access');
-    }
+    // Restriction disabled per user request
+    return next();
 };
