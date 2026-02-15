@@ -223,16 +223,17 @@ export const TicketsView: React.FC = () => {
                                                 <Lock className="w-3 h-3" /> Grant Access
                                             </button>
 
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-gray-400">Assign:</span>
+                                            <div className="flex items-center gap-2 bg-gray-900/50 p-1.5 rounded-xl border border-white/10">
                                                 <select
-                                                    className="bg-gray-900 border border-white/10 text-xs rounded-lg p-1"
-                                                    onChange={(e) => handleAssignTicket(selectedTicket._id, e.target.value)}
+                                                    className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer"
+                                                    onChange={(e) => {
+                                                        if (e.target.value) handleAssignTicket(selectedTicket._id, e.target.value);
+                                                    }}
                                                     value={selectedTicket.assignedTo?._id || ""}
                                                 >
-                                                    <option value="">Unassigned</option>
+                                                    <option value="">Assign to Admin...</option>
                                                     {managers.map(m => (
-                                                        <option key={m._id} value={m._id}>{m.username}</option>
+                                                        <option key={m._id} value={m._id}>{m.username} ({m.role})</option>
                                                     ))}
                                                 </select>
                                             </div>
