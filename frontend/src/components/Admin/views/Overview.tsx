@@ -23,7 +23,7 @@ export const Overview: React.FC = () => {
                 const token = localStorage.getItem('token');
                 const [statsRes, settingsRes] = await Promise.all([
                     axios.get(`${API_URL}/admin/analytics`, { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get(`${API_URL}/api/settings`, { headers: { Authorization: `Bearer ${token}` } })
+                    axios.get(`${API_URL}/settings`, { headers: { Authorization: `Bearer ${token}` } })
                 ]);
                 setStats(statsRes.data);
                 if (settingsRes.data) {
@@ -43,7 +43,7 @@ export const Overview: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             const newValue = !allowUserUploads;
-            await axios.post(`${API_URL}/api/settings`,
+            await axios.post(`${API_URL}/settings`,
                 { allowUserUploads: newValue },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -71,31 +71,39 @@ export const Overview: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <div className="bg-gray-800/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl shadow-lg shadow-purple-500/20">
-                        <Shield className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                            System Overview
-                        </h1>
-                        <p className="text-gray-400 text-sm">Real-time metrics & global controls</p>
-                    </div>
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <Shield className="w-32 h-32 text-white" />
                 </div>
 
-                <div className="flex items-center gap-4 bg-gray-900/50 p-3 rounded-2xl border border-white/5">
-                    <div className="flex flex-col items-end">
-                        <span className="text-sm font-bold text-gray-200">User Uploads</span>
-                        <span className="text-xs text-gray-500">{allowUserUploads ? 'Allowed' : 'Restricted'}</span>
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30">
+                            <Shield className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-4xl font-bold text-white mb-1">
+                                System Overview
+                            </h1>
+                            <p className="text-gray-400">Manage your application's global settings and metrics.</p>
+                        </div>
                     </div>
-                    <button
-                        onClick={handleToggleUploads}
-                        disabled={settingsLoading}
-                        className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${allowUserUploads ? 'bg-green-500' : 'bg-gray-600'}`}
-                    >
-                        <div className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow transition-transform duration-300 ${allowUserUploads ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
+
+                    <div className="flex items-center gap-4 bg-black/40 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
+                        <div className="flex flex-col items-end mr-2">
+                            <span className="text-sm font-bold text-gray-200">User Uploads</span>
+                            <span className={`text-xs font-medium ${allowUserUploads ? 'text-green-400' : 'text-red-400'}`}>
+                                {allowUserUploads ? 'Enabled' : 'Disabled'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={handleToggleUploads}
+                            disabled={settingsLoading}
+                            className={`relative w-14 h-8 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${allowUserUploads ? 'bg-green-500' : 'bg-gray-700'}`}
+                        >
+                            <div className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${allowUserUploads ? 'translate-x-6' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
