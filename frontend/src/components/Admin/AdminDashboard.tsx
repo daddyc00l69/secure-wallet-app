@@ -3,7 +3,7 @@ import { Shield, LayoutDashboard, Users, UserPlus, Ticket, LogOut } from 'lucide
 import { Overview } from './views/Overview';
 import { UsersView } from './views/UsersView';
 import { ManagersView } from './views/ManagersView';
-import { TicketsView } from './views/TicketsView';
+import TicketsView from './views/TicketsView';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
