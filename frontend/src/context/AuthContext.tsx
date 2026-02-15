@@ -48,13 +48,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!res.data.hasPin) {
                 setIsAppLocked(false);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch user', error);
-            localStorage.removeItem('token');
-            setToken(null);
-            setUser(null);
-            delete axios.defaults.headers.common['Authorization'];
-            setIsAppLocked(false);
+            // Only logout on auth errors
+            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                localStorage.removeItem('token');
+                setToken(null);
+                setUser(null);
+                delete axios.defaults.headers.common['Authorization'];
+                setIsAppLocked(false);
+            }
+            // For other errors (network, 500), keep the token but maybe set error state? 
+            // For now, doing nothing keeps the user "logged in" but maybe with stale data, which is better than booting them.
         } finally {
             setLoading(false);
         }
