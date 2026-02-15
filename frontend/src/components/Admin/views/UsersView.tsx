@@ -138,7 +138,7 @@ export const UsersView: React.FC = () => {
                                 <td className="py-3 text-right flex justify-end gap-2">
                                     {/* Screenshot toggle removed as requested */}
 
-                                    {user.role === 'manager' && (
+                                    {user.role === 'manager' && currentUser?.email !== 'admin@test.app' && (
                                         <button onClick={() => handleUpdateRole(user._id, 'user')} className="text-xs text-red-400 hover:underline">
                                             Demote
                                         </button>
