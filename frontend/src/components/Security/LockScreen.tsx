@@ -6,7 +6,7 @@ import { API_URL } from '../../config';
 import { motion } from 'framer-motion';
 
 export const LockScreen: React.FC = () => {
-    const { unlockApp, user } = useAuth();
+    const { unlockApp, user, logout } = useAuth();
     const [pin, setPin] = useState('');
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -180,6 +180,13 @@ export const LockScreen: React.FC = () => {
                         Incorrect PIN
                     </p>
                 )}
+
+                <button
+                    onClick={logout}
+                    className="mt-8 text-xs text-gray-500 hover:text-white transition-colors flex items-center gap-1"
+                >
+                    Switch Account / Logout
+                </button>
             </motion.div>
         </div>
     );
