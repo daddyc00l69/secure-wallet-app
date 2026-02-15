@@ -14,6 +14,8 @@ import { ForgotPasswordPage } from './components/Auth/ForgotPasswordPage';
 import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { ManagerDashboard } from './components/Manager/ManagerDashboard';
 import { ManagerSetupPage } from './components/Auth/ManagerSetupPage';
+import { SecureEditPage } from './components/Auth/SecureEditPage';
+import { SecureEditPage } from './components/Auth/SecureEditPage';
 
 // Protected Route Component
 const RequireAuth = ({ children, role }: { children: React.ReactElement, role?: 'admin' | 'manager' }) => {
@@ -59,6 +61,7 @@ function App() {
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/manager-setup" element={<ManagerSetupPage />} />
+        <Route path="/secure-edit" element={<SecureEditPage />} />
 
         {/* User Routes */}
         <Route
