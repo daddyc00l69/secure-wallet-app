@@ -46,6 +46,13 @@ export const ManagerDashboard: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchTickets();
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
     const handleReply = async () => {
         if (!selectedTicket || !reply.trim()) return;
         try {
@@ -130,7 +137,7 @@ export const ManagerDashboard: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex justify-between items-center mb-1">
-                                <p className="text-xs text-gray-500">by {ticket.user?.username}</p>
+                                <p className="text-xs text-gray-500">by User</p>
                                 <p className="text-[10px] text-gray-400">
                                     {new Date(ticket.lastMessageAt || ticket.createdAt).toLocaleDateString()}
                                 </p>
@@ -151,7 +158,7 @@ export const ManagerDashboard: React.FC = () => {
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{selectedTicket.subject}</h2>
                                 <p className="text-sm text-gray-500">
-                                    Submitted by <span className="font-bold text-gray-700">{selectedTicket.user?.username}</span> on {new Date(selectedTicket.createdAt).toLocaleDateString()}
+                                    Submitted by <span className="font-bold text-gray-700">User</span> on {new Date(selectedTicket.createdAt).toLocaleDateString()}
                                 </p>
                             </div>
                             {selectedTicket.status !== 'closed' && (
@@ -179,7 +186,7 @@ export const ManagerDashboard: React.FC = () => {
                             {/* Original Message */}
                             <div className="flex justify-start">
                                 <div className="max-w-[80%]">
-                                    <div className="text-xs text-gray-400 mb-1 ml-2">{selectedTicket.user?.username}</div>
+                                    <div className="text-xs text-gray-400 mb-1 ml-2">User</div>
                                     <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-gray-200 shadow-sm">
                                         {selectedTicket.message}
                                     </div>
@@ -191,7 +198,7 @@ export const ManagerDashboard: React.FC = () => {
                                 <div key={idx} className={`flex ${msg.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
                                     <div className="max-w-[80%]">
                                         <div className={`text-xs text-gray-400 mb-1 ${msg.sender === 'agent' ? 'text-right mr-2' : 'ml-2'}`}>
-                                            {msg.sender === 'agent' ? 'Support Agent' : selectedTicket.user?.username}
+                                            {msg.sender === 'agent' ? 'Me' : 'User'}
                                         </div>
                                         <div className={`p-4 rounded-2xl shadow-sm ${msg.sender === 'agent'
                                             ? 'bg-blue-600 text-white rounded-tr-none'
