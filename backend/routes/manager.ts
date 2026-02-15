@@ -35,8 +35,8 @@ router.get('/tickets', auth, authorize(['manager', 'admin']), async (req: AuthRe
     }
 });
 
-// Assign Ticket (Admin only)
-router.put('/tickets/:id/assign', auth, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+// Assign Ticket (Manager & Admin)
+router.put('/tickets/:id/assign', auth, authorize(['admin', 'manager']), async (req: AuthRequest, res: Response) => {
     try {
         const { managerId } = req.body;
         const ticket = await SupportTicket.findById(req.params.id);
@@ -126,6 +126,17 @@ router.post('/tickets/:id/toggle-upload', auth, authorize(['manager', 'admin']),
         ticket.allowAttachments = !ticket.allowAttachments;
         await ticket.save();
         res.json(ticket);
+    } catch (err) {
+        console.error((err as Error).message);
+        res.status(500).send('Server error');
+    }
+});
+
+// Get List of Managers (for assignment)
+router.get('/list-managers', auth, authorize(['manager', 'admin']), async (req: AuthRequest, res: Response) => {
+    try {
+        const managers = await User.find({ role: { $in: ['manager', 'admin'] } }).select('_id username role email');
+        res.json(managers);
     } catch (err) {
         console.error((err as Error).message);
         res.status(500).send('Server error');
