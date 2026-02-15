@@ -32,8 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
-    // Default locked if token exists (will be verified against hasPin later)
-    const [isAppLocked, setIsAppLocked] = useState(!!localStorage.getItem('token'));
+    // Default unlocked. We will lock if necessary based on user prefs/timeout later.
+    const [isAppLocked, setIsAppLocked] = useState(false);
 
     const [editToken, setEditToken] = useState<string | null>(null);
 
