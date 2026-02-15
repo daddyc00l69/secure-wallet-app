@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../../config';
-import { Ticket, Eye, Settings, Lock, Loader2 } from 'lucide-react';
+import { Ticket, Lock, Loader2, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Ticket {
@@ -178,79 +178,126 @@ export const TicketsView: React.FC = () => {
 
             <AnimatePresence>
                 {selectedTicket && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-gray-900 border border-white/10 rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
-                            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gray-800/50">
-                                <div>
-                                    <h3 className="font-bold text-lg">Ticket Details</h3>
-                                    <p className="text-xs text-gray-400">{selectedTicket.subject}</p>
-                                </div>
-                                <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-white/10 rounded-full">✕</button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[60vh] custom-scrollbar">
-                                <div className="bg-gray-800/50 p-4 rounded-2xl rounded-tl-none border border-white/5">
-                                    <p className="text-xs text-gray-400 mb-1 font-bold">Original Request</p>
-                                    <p className="text-sm">{selectedTicket.message}</p>
-                                </div>
-                                {selectedTicket.messages?.map((msg, i) => (
-                                    <div key={i} className={`flex ${msg.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`p-4 rounded-2xl max-w-[80%] text-sm ${msg.sender === 'agent' ? 'bg-blue-600/90 text-white rounded-tr-none shadow-lg shadow-blue-500/10' : 'bg-gray-800 border border-white/10 text-gray-200 rounded-tl-none'
-                                            }`}>
-                                            {msg.sender === 'agent' && (
-                                                <div className="text-[10px] font-bold text-blue-200 mb-1 text-right">
-                                                    Agent
-                                                </div>
-                                            )}
-                                            {msg.message}
-                                            <div className={`text-[10px] mt-1 text-right ${msg.sender === 'agent' ? 'text-blue-100' : 'text-gray-500'}`}>
-                                                {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                            </div>
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-[#1a1d24] border border-white/10 rounded-2xl w-full max-w-3xl h-[80vh] flex flex-col shadow-2xl overflow-hidden font-sans">
+                            {/* Header */}
+                            <div className="p-5 border-b border-white/5 bg-[#14161b] flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${selectedTicket.status === 'open' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                                        <Ticket className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg text-white leading-tight">{selectedTicket.subject}</h3>
+                                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                                            <span>Ticket #{selectedTicket._id.slice(-6)}</span>
+                                            <span>•</span>
+                                            <span>{new Date(selectedTicket.createdAt).toLocaleDateString()}</span>
+                                            <span>•</span>
+                                            <span className={`capitalize ${selectedTicket.status === 'open' ? 'text-green-400' : 'text-blue-400'}`}>
+                                                {selectedTicket.status}
+                                            </span>
                                         </div>
                                     </div>
-                                ))}
+                                </div>
+                                <button onClick={() => setSelectedTicket(null)} className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
                             </div>
 
-                            <div className="p-4 bg-gray-800/50 border-t border-white/10">
-                                {selectedTicket.status !== 'closed' ? (
-                                    <div className="space-y-3">
-                                        <div className="flex gap-2 justify-between items-center">
-                                            <button
-                                                onClick={handleGrantAccess}
-                                                className="bg-purple-600/20 text-purple-400 px-3 py-1 rounded-lg text-xs font-bold border border-purple-500/30 hover:bg-purple-600/30 flex items-center gap-1"
-                                                title="Grant 15 min edit access"
-                                            >
-                                                <Lock className="w-3 h-3" /> Grant Access
-                                            </button>
+                            {/* Content & Chat */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-[#1a1d24]">
+                                {/* Original Request Card */}
+                                <div className="bg-[#20232a] border border-white/5 rounded-xl p-5 shadow-sm">
+                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Original Request</h4>
+                                    <p className="text-gray-200 text-sm leading-relaxed">{selectedTicket.message}</p>
+                                </div>
 
-                                            <div className="flex items-center gap-2 bg-gray-900/50 p-1.5 rounded-xl border border-white/10">
-                                                <select
-                                                    className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer"
-                                                    onChange={(e) => {
-                                                        if (e.target.value) handleAssignTicket(selectedTicket._id, e.target.value);
-                                                    }}
-                                                    value={selectedTicket.assignedTo?._id || ""}
-                                                >
-                                                    <option value="">Assign to Admin...</option>
-                                                    {managers.map(m => (
-                                                        <option key={m._id} value={m._id}>{m.username} ({m.role})</option>
-                                                    ))}
-                                                </select>
+                                <div className="flex items-center gap-4">
+                                    <div className="h-px bg-white/5 flex-1"></div>
+                                    <span className="text-xs text-gray-600 font-medium">Conversation History</span>
+                                    <div className="h-px bg-white/5 flex-1"></div>
+                                </div>
+
+                                {/* Messages */}
+                                <div className="space-y-4">
+                                    {selectedTicket.messages?.map((msg, i) => (
+                                        <div key={i} className={`flex ${msg.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[85%] ${msg.sender === 'agent' ? 'items-end' : 'items-start'} flex flex-col`}>
+                                                <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'agent'
+                                                    ? 'bg-blue-600 text-white rounded-tr-sm'
+                                                    : 'bg-[#2a2d36] text-gray-200 border border-white/5 rounded-tl-sm'
+                                                    }`}>
+                                                    {msg.sender === 'agent' && <div className="text-[10px] font-bold text-blue-200 mb-1">Agent</div>}
+                                                    {msg.message}
+                                                </div>
+                                                <span className="text-[10px] text-gray-600 mt-1 px-1">
+                                                    {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </span>
                                             </div>
                                         </div>
-                                        <form onSubmit={(e) => handleReplyTicket(e)} className="flex gap-2">
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Footer / Actions */}
+                            <div className="p-5 bg-[#14161b] border-t border-white/5 z-10">
+                                {selectedTicket.status !== 'closed' ? (
+                                    <div className="space-y-4">
+                                        <div className="flex flex-wrap gap-2 items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={handleGrantAccess}
+                                                    className="bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-500/20 hover:bg-purple-500/20 flex items-center gap-1.5 transition-colors"
+                                                >
+                                                    <Lock className="w-3.5 h-3.5" /> Grant Access
+                                                </button>
+
+                                                <div className="bg-[#20232a] border border-white/10 rounded-lg flex items-center px-2 py-1">
+                                                    <span className="text-[10px] text-gray-500 mr-2 uppercase font-bold tracking-wider">Assign</span>
+                                                    <select
+                                                        className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer py-0.5"
+                                                        onChange={(e) => {
+                                                            if (e.target.value) handleAssignTicket(selectedTicket._id, e.target.value);
+                                                        }}
+                                                        value={selectedTicket.assignedTo?._id || ""}
+                                                    >
+                                                        <option value="">Select Admin...</option>
+                                                        {managers.map(m => (
+                                                            <option key={m._id} value={m._id}>{m.username}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleCloseTicket(selectedTicket._id)}
+                                                className="text-xs text-red-400 hover:text-red-300 font-medium px-2"
+                                            >
+                                                Close Ticket
+                                            </button>
+                                        </div>
+
+                                        <form onSubmit={(e) => handleReplyTicket(e)} className="flex gap-2 relative">
                                             <input
                                                 value={replyMessage}
                                                 onChange={e => setReplyMessage(e.target.value)}
                                                 placeholder="Type a reply..."
-                                                className="flex-1 bg-gray-900 border border-white/10 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                className="flex-1 bg-[#20232a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium"
                                             />
-                                            <button type="submit" className="bg-blue-600 px-4 rounded-xl font-bold hover:bg-blue-500">Send</button>
-                                            <button type="button" onClick={() => handleCloseTicket(selectedTicket._id)} className="bg-red-500/20 text-red-400 px-4 rounded-xl font-bold hover:bg-red-500/30">Close</button>
+                                            <button
+                                                type="submit"
+                                                disabled={!replyMessage.trim()}
+                                                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-500/20"
+                                            >
+                                                Send
+                                            </button>
                                         </form>
                                     </div>
                                 ) : (
-                                    <div className="text-center text-gray-500">Ticket Closed</div>
+                                    <div className="flex items-center justify-center p-2 text-gray-500 gap-2 bg-white/5 rounded-xl border border-dashed border-white/10">
+                                        <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                                        <span className="font-medium text-sm">This ticket is closed</span>
+                                    </div>
                                 )}
                             </div>
                         </div>
