@@ -222,7 +222,7 @@ export const ManagerDashboard: React.FC = () => {
                                         >
                                             <option value="">Select Admin...</option>
                                             {managers.map(m => (
-                                                <option key={m._id} value={m._id}>{m.username}</option>
+                                                <option key={m._id} value={m._id}>{m.username} ({m.role})</option>
                                             ))}
                                         </select>
                                     </div>
