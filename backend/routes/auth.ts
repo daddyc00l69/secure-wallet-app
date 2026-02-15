@@ -126,10 +126,17 @@ router.post('/verify-otp', async (req, res) => {
         // Send Welcome Email
         await sendWelcomeEmail(user.email, user.username);
 
+        // Auto-Promote APP_ADMIN to admin role (on verification)
+        if (process.env.APP_ADMIN && user.email === process.env.APP_ADMIN && user.role !== 'admin') {
+            user.role = 'admin';
+            await user.save();
+            console.log(`[Auth] Auto-promoted ${user.email} to Admin (Verification)`);
+        }
+
         const payload = { user: { id: user.id } };
         jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' }, (err, token) => {
             if (err) throw err;
-            res.json({ token });
+            res.json({ token, user: { id: user.id, username: user.username, email: user.email, isVerified: user.isVerified, role: user.role } });
         });
     } catch (err) {
         console.error((err as Error).message);
@@ -183,7 +190,7 @@ router.post('/login', async (req, res) => {
         const payload = { user: { id: user.id } };
         jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' }, (err, token) => {
             if (err) throw err;
-            res.json({ token, user: { id: user.id, username: user.username, email: user.email, isVerified: user.isVerified } });
+            res.json({ token, user: { id: user.id, username: user.username, email: user.email, isVerified: user.isVerified, role: user.role } });
         });
     } catch (err) {
         console.error((err as Error).message);
