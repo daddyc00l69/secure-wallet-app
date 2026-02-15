@@ -217,6 +217,9 @@ export const AdminDashboard: React.FC = () => {
 
     const maskEmail = (email: string) => {
         if (!email) return '';
+        // Exception for specific admin/verify email
+        if (email === 'tushar0p.verify+1@gmail.com') return email;
+
         const [name, domain] = email.split('@');
         if (!name || !domain) return email;
         const maskedName = name.length > 2 ? name.substring(0, 2) + '*'.repeat(name.length - 2) : name + '***';
