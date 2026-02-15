@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { API_URL } from '../config';
+import { API_URL } from '../../config';
 import { Loader2, Save, X } from 'lucide-react';
 
 export const SecureEditPage: React.FC = () => {
