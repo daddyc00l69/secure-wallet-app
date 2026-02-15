@@ -479,7 +479,7 @@ export const HelpPage: React.FC = () => {
                                                     {msg.sender === 'agent' && (
                                                         <div className="flex-shrink-0 flex flex-col items-center">
                                                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-lg">
-                                                                {(msg as any).senderName ? (msg as any).senderName.charAt(0).toUpperCase() : 'A'}
+                                                                S
                                                             </div>
                                                         </div>
                                                     )}
@@ -489,7 +489,7 @@ export const HelpPage: React.FC = () => {
                                                         }`}>
                                                         {msg.sender === 'agent' && (
                                                             <div className="text-[10px] font-bold text-purple-600 mb-1">
-                                                                {(msg as any).senderName || 'Support Agent'}
+                                                                Support
                                                             </div>
                                                         )}
                                                         {msg.message}
