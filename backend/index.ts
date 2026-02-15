@@ -101,7 +101,7 @@ app.get('/api/cards', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.post('/api/cards', auth, requireEditAccess, async (req: AuthRequest, res) => {
+app.post('/api/cards', auth, async (req: AuthRequest, res) => {
     try {
         const newCard = new Card({ ...req.body, user: req.user.user.id });
         const savedCard = await newCard.save();
@@ -135,7 +135,7 @@ app.get('/api/bank-accounts', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.post('/api/bank-accounts', auth, requireEditAccess, async (req: AuthRequest, res) => {
+app.post('/api/bank-accounts', auth, async (req: AuthRequest, res) => {
     try {
         const newAccount = new BankAccount({ ...req.body, user: req.user.user.id });
         const savedAccount = await newAccount.save();
@@ -169,7 +169,7 @@ app.get('/api/addresses', auth, async (req: AuthRequest, res) => {
     }
 });
 
-app.post('/api/addresses', auth, requireEditAccess, async (req: AuthRequest, res) => {
+app.post('/api/addresses', auth, async (req: AuthRequest, res) => {
     try {
         const newAddress = new Address({ ...req.body, user: req.user.user.id });
         const savedAddress = await newAddress.save();
