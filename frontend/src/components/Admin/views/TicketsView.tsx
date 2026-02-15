@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../../config';
+import { useAuth } from '../../../context/AuthContext';
 import { Ticket, Lock, Loader2, Trash2, RefreshCw } from 'lucide-react';
 
 interface Ticket {
@@ -26,6 +27,7 @@ export const TicketsView: React.FC = () => {
     const [managers, setManagers] = useState<{ _id: string, username: string, role: string }[]>([]);
     const [reply, setReply] = useState('');
     const lastTicketsRef = useRef<string>('');
+    const { user: currentUser } = useAuth();
 
     useEffect(() => {
         fetchTickets();
@@ -168,7 +170,7 @@ export const TicketsView: React.FC = () => {
                             <div className="flex justify-between items-start mb-1">
                                 <h4 className={`font-bold text-sm line-clamp-1 ${ticket.status === 'closed' ? 'text-gray-500' : 'text-gray-200'}`}>{ticket.subject}</h4>
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${ticket.status === 'open' ? 'bg-green-500/10 text-green-500' :
-                                        ticket.status === 'closed' ? 'bg-gray-500/10 text-gray-500' : 'bg-blue-500/10 text-blue-500'
+                                    ticket.status === 'closed' ? 'bg-gray-500/10 text-gray-500' : 'bg-blue-500/10 text-blue-500'
                                     }`}>
                                     {ticket.status}
                                 </span>
@@ -214,17 +216,25 @@ export const TicketsView: React.FC = () => {
 
                                 {selectedTicket.status === 'closed' ? (
                                     <>
-                                        <button onClick={() => handleReopenTicket(selectedTicket._id)} className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-yellow-500/20 transition-colors flex items-center gap-1">
-                                            <RefreshCw className="w-3 h-3" /> Reopen
-                                        </button>
-                                        <button onClick={() => handleDeleteTicket(selectedTicket._id)} className="bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 transition-colors flex items-center gap-1">
-                                            <Trash2 className="w-3 h-3" /> Delete
-                                        </button>
+                                        {currentUser?.email !== 'admin@test.app' && (
+                                            <>
+                                                <button onClick={() => handleReopenTicket(selectedTicket._id)} className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-yellow-500/20 transition-colors flex items-center gap-1">
+                                                    <RefreshCw className="w-3 h-3" /> Reopen
+                                                </button>
+                                                <button onClick={() => handleDeleteTicket(selectedTicket._id)} className="bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 transition-colors flex items-center gap-1">
+                                                    <Trash2 className="w-3 h-3" /> Delete
+                                                </button>
+                                            </>
+                                        )}
                                     </>
                                 ) : (
-                                    <button onClick={() => handleCloseTicket(selectedTicket._id)} className="bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 transition-colors">
-                                        Close
-                                    </button>
+                                    <>
+                                        {currentUser?.email !== 'admin@test.app' && (
+                                            <button onClick={() => handleCloseTicket(selectedTicket._id)} className="bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500/20 transition-colors">
+                                                Close
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -239,8 +249,8 @@ export const TicketsView: React.FC = () => {
                                 <div key={i} className={`flex ${msg.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[80%] ${msg.sender === 'agent' ? 'items-end' : 'items-start'} flex flex-col`}>
                                         <div className={`px-4 py-3 rounded-2xl text-sm ${msg.sender === 'agent'
-                                                ? 'bg-blue-600 text-white rounded-tr-sm'
-                                                : 'bg-[#1a1d24] border border-white/5 text-gray-200 rounded-tl-sm'
+                                            ? 'bg-blue-600 text-white rounded-tr-sm'
+                                            : 'bg-[#1a1d24] border border-white/5 text-gray-200 rounded-tl-sm'
                                             }`}>
                                             {msg.message}
                                         </div>
