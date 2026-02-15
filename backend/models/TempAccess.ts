@@ -6,6 +6,11 @@ const TempAccessSchema = new mongoose.Schema({
     type: { type: String, required: true, enum: ['edit_profile'] },
     expiresAt: { type: Date, required: true },
     used: { type: Boolean, default: false },
+    permissions: {
+        canAdd: { type: Boolean, default: false },
+        canEdit: { type: Boolean, default: true },
+        canDelete: { type: Boolean, default: true }
+    },
     createdAt: { type: Date, default: Date.now, expires: '15m' } // Auto-delete doc after 15m (or custom logic)
 });
 
