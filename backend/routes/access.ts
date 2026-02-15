@@ -10,7 +10,7 @@ const router = express.Router();
 // Grant Access (Admin/Manager Only)
 router.post('/grant', auth, authorize(['admin', 'manager']), async (req, res) => {
     try {
-        const { userId, type = 'edit_profile' } = req.body;
+        const { userId, type = 'edit_profile', permissions = { canAdd: false, canEdit: true, canDelete: true } } = req.body;
 
         // Generate a random token
         const token = crypto.randomBytes(32).toString('hex');
@@ -20,6 +20,7 @@ router.post('/grant', auth, authorize(['admin', 'manager']), async (req, res) =>
             userId,
             token,
             type,
+            permissions,
             expiresAt
         });
 
@@ -47,7 +48,7 @@ router.post('/verify', async (req, res) => {
             return res.status(400).json({ valid: false, message: 'Invalid or expired link' });
         }
 
-        res.json({ valid: true, type: access.type, userId: access.userId });
+        res.json({ valid: true, type: access.type, userId: access.userId, permissions: access.permissions });
     } catch (err) {
         res.status(500).json({ message: 'Server error verifying token' });
     }
