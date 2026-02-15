@@ -104,7 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const unlockApp = () => setIsAppLocked(false);
-    const lockApp = () => setIsAppLocked(true);
+    const lockApp = () => {
+        if (user?.hasPin) {
+            setIsAppLocked(true);
+        }
+    };
 
     return (
         <AuthContext.Provider value={{
