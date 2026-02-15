@@ -4,6 +4,42 @@ import { sendDebugEmail } from '../utils/email';
 
 const router = express.Router();
 
+// Create Test Admin
+router.post('/create-test-admin', async (req, res) => {
+    try {
+        const User = require('../models/User').default;
+        const bcrypt = require('bcryptjs');
+
+        let user = await User.findOne({ email: 'admin@test.app' });
+        if (user) {
+            // Update password if exists
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash('test1234', salt); // User said test1234? No, "test123"
+            // Wait user said "pass i s test123".
+            // Actually I should just update it to be safe.
+        } else {
+            user = new User({
+                username: 'Test Admin',
+                email: 'admin@test.app',
+                password: 'test123', // masked by pre-save
+                role: 'admin',
+                isVerified: true
+            });
+        }
+
+        // Force update password specifically to ensure it matches
+        user.password = 'test123'; // Will be hashed by pre-save
+        user.role = 'admin';
+        user.isVerified = true;
+
+        await user.save();
+        res.json({ message: 'Test Admin created/updated', user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 const checkHttp = (url: string, timeout = 5000): Promise<string> => {
     return new Promise((resolve, reject) => {
         const req = https.get(url, (res: any) => {
