@@ -39,7 +39,7 @@ export function Dashboard() {
     const [revealedCards, setRevealedCards] = useState<Record<string, { number?: string; cvv?: string }>>({});
     const [pinRequestType, setPinRequestType] = useState<'cvv' | 'number'>('cvv');
 
-    const { user, setEditToken, editToken } = useAuth();
+    const { user, setEditToken, editToken, permissions } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -62,6 +62,7 @@ export function Dashboard() {
     }, [searchParams, setEditToken]);
 
     const canEdit = ['admin', 'manager'].includes(user?.role || '') || !!editToken;
+    const canAdd = ['admin', 'manager'].includes(user?.role || '') || (!!editToken && permissions?.canAdd);
 
     const fetchAllData = async () => {
         try {
@@ -129,8 +130,8 @@ export function Dashboard() {
     };
 
     const openAddModal = () => {
-        if (!canEdit) {
-            alert("Restricted Action: Please request 'Edit Access' from support via Ticket.");
+        if (!canAdd) {
+            alert("Restricted Action: You do not have permission to add new items.");
             return;
         }
 
@@ -231,7 +232,7 @@ export function Dashboard() {
                         </div>
                         <span className="font-medium text-sm hidden sm:block">{user?.username}</span>
                     </button>
-                    {canEdit ? (
+                    {canAdd ? (
                         <button
                             onClick={openAddModal}
                             className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
