@@ -158,12 +158,99 @@ router.post('/fix-system', async (req, res) => {
             }
         }
 
+        // 3. Cards
+        const Card = require('../models/Card').default;
+        const cards = await Card.find({});
+        let migratedCards = 0;
+        for (const card of cards) {
+            const c = card as any;
+            let modified = false;
+
+            // Number (Uses 'iv' generic name)
+            if (c._doc.number && !c.encryptedNumber) {
+                const { iv, content } = encrypt(c._doc.number);
+                c.encryptedNumber = content;
+                c.iv = iv;
+                c.last4 = c._doc.number.slice(-4);
+                modified = true;
+            }
+
+            // Holder
+            if (c._doc.holder && !c.encryptedHolder) {
+                const { iv, content } = encrypt(c._doc.holder);
+                c.encryptedHolder = content;
+                c.holderIv = iv;
+                modified = true;
+            }
+
+            // Expiry
+            if (c._doc.expiry && !c.encryptedExpiry) {
+                const { iv, content } = encrypt(c._doc.expiry);
+                c.encryptedExpiry = content;
+                c.expiryIv = iv;
+                modified = true;
+            }
+
+            // CVV
+            if (c._doc.cvv && !c.encryptedCvv) {
+                const { iv, content } = encrypt(c._doc.cvv);
+                c.encryptedCvv = content;
+                c.cvvIv = iv;
+                modified = true;
+            }
+
+            // PIN
+            if (c._doc.pin && !c.encryptedPin) {
+                const { iv, content } = encrypt(c._doc.pin);
+                c.encryptedPin = content;
+                c.pinIv = iv;
+                modified = true;
+            }
+
+            // Bank
+            if (c._doc.bank && !c.encryptedBank) {
+                const { iv, content } = encrypt(c._doc.bank);
+                c.encryptedBank = content;
+                c.bankIv = iv;
+                modified = true;
+            }
+
+            if (modified) {
+                const updateData: any = {
+                    encryptedNumber: c.encryptedNumber,
+                    iv: c.iv,
+                    last4: c.last4,
+                    encryptedHolder: c.encryptedHolder,
+                    holderIv: c.holderIv,
+                    encryptedExpiry: c.encryptedExpiry,
+                    expiryIv: c.expiryIv,
+                    encryptedCvv: c.encryptedCvv,
+                    cvvIv: c.cvvIv,
+                    encryptedPin: c.encryptedPin,
+                    pinIv: c.pinIv,
+                    encryptedBank: c.encryptedBank,
+                    bankIv: c.bankIv
+                };
+                Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+                await Card.updateOne(
+                    { _id: c._id },
+                    {
+                        $set: updateData,
+                        $unset: { number: 1, holder: 1, expiry: 1, cvv: 1, pin: 1, bank: 1 }
+                    }
+                );
+                migratedCards++;
+            }
+        }
+
         res.json({
             message: 'System fixed successfully',
             admin: 'Refreshed',
             migration: {
                 bankAccounts: migratedAccounts,
-                addresses: migratedAddresses
+                addresses: migratedAddresses,
+                cards: migratedCards
             }
         });
 
