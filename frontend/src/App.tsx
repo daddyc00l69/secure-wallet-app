@@ -54,7 +54,7 @@ function App() {
   return (
     <>
       {isAuthenticated && <PrivacyShield />}
-      {isAuthenticated && isAppLocked && !['/login', '/register', '/forgot-password', '/secure-edit'].includes(location.pathname) && <LockScreen />}
+      {isAuthenticated && isAppLocked && !['/login', '/register', '/forgot-password', '/secure-edit'].some(path => location.pathname.startsWith(path)) && <LockScreen />}
       <Routes>
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
