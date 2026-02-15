@@ -69,4 +69,24 @@ router.post('/consume', async (req, res) => {
     }
 });
 
+// Update Profile via Token
+router.post('/update-profile', async (req, res) => {
+    try {
+        const { token, username } = req.body;
+        const access = await TempAccess.findOne({ token, used: false });
+
+        if (!access || access.expiresAt < new Date()) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+
+        const User = require('../models/User').default || require('../models/User');
+        await User.findByIdAndUpdate(access.userId, { username });
+
+        res.json({ success: true, message: 'Profile updated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error updating profile' });
+    }
+});
+
 export default router;
