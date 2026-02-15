@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import { MessageCircle, Loader2 } from 'lucide-react';
@@ -29,6 +29,7 @@ export const ManagerDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [reply, setReply] = useState('');
+    const lastTicketsRef = useRef<string>('');
 
     useEffect(() => {
         fetchTickets();
@@ -38,7 +39,13 @@ export const ManagerDashboard: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.get(`${API_URL}/manager/tickets`, { headers: { Authorization: `Bearer ${token}` } });
-            setTickets(res.data);
+
+            // Optimization: Only update state if data changed
+            const strData = JSON.stringify(res.data);
+            if (strData !== lastTicketsRef.current) {
+                setTickets(res.data);
+                lastTicketsRef.current = strData;
+            }
             return res.data;
         } catch (err) {
             console.error(err);
