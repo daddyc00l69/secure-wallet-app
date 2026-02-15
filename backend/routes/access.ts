@@ -12,8 +12,8 @@ router.post('/grant', auth, authorize(['admin', 'manager']), async (req, res) =>
     try {
         const { userId, type = 'edit_profile', permissions = { canAdd: false, canEdit: true, canDelete: true } } = req.body;
 
-        // Generate a random token
-        const token = crypto.randomBytes(32).toString('hex');
+        // Generate a short random token (8 characters)
+        const token = crypto.randomBytes(4).toString('hex');
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
         const tempAccess = new TempAccess({
