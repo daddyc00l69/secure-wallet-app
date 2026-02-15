@@ -14,6 +14,7 @@ interface Ticket {
     createdAt: string;
     messages?: {
         sender: string;
+        senderName?: string;
         message: string;
         timestamp?: string;
     }[];
@@ -28,7 +29,7 @@ interface User {
 
 export const TicketsView: React.FC = () => {
     const [tickets, setTickets] = useState<Ticket[]>([]);
-    const [managers, setManagers] = useState<User[]>([]);
+    const [managers, setManagers] = useState<User[]>([]); // Includes Admins now
     const [loading, setLoading] = useState(true);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [replyMessage, setReplyMessage] = useState('');
@@ -42,7 +43,7 @@ export const TicketsView: React.FC = () => {
                     axios.get(`${API_URL}/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
                 ]);
                 setTickets(ticketsRes.data);
-                setManagers(usersRes.data.filter((u: User) => u.role === 'manager'));
+                setManagers(usersRes.data.filter((u: User) => u.role === 'manager' || u.role === 'admin')); // Admins too
             } catch (err) {
                 console.error(err);
             } finally {
@@ -50,7 +51,27 @@ export const TicketsView: React.FC = () => {
             }
         };
         fetchData();
-    }, []);
+
+        // Polling
+        const interval = setInterval(() => {
+            const fetchUpdates = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await axios.get(`${API_URL}/admin/tickets`, { headers: { Authorization: `Bearer ${token}` } });
+                    setTickets(res.data);
+                    // Update selected
+                    if (selectedTicket) {
+                        const updated = res.data.find((t: any) => t._id === selectedTicket._id);
+                        if (updated && updated.messages.length !== selectedTicket.messages?.length) {
+                            setSelectedTicket(updated);
+                        }
+                    }
+                } catch (err) { console.error(err); }
+            };
+            fetchUpdates();
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [selectedTicket]);
 
     const handleReplyTicket = async (e: React.FormEvent, customMessage?: string) => {
         if (e) e.preventDefault();
@@ -176,6 +197,11 @@ export const TicketsView: React.FC = () => {
                                     <div key={i} className={`flex ${msg.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`p-4 rounded-2xl max-w-[80%] text-sm ${msg.sender === 'agent' ? 'bg-blue-600/90 text-white rounded-tr-none shadow-lg shadow-blue-500/10' : 'bg-gray-800 border border-white/10 text-gray-200 rounded-tl-none'
                                             }`}>
+                                            {msg.sender === 'agent' && (
+                                                <div className="text-[10px] font-bold text-blue-200 mb-1 text-right">
+                                                    {(msg as any).senderName || 'You'}
+                                                </div>
+                                            )}
                                             {msg.message}
                                             <div className={`text-[10px] mt-1 text-right ${msg.sender === 'agent' ? 'text-blue-100' : 'text-gray-500'}`}>
                                                 {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
