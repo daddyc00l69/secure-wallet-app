@@ -4,6 +4,21 @@ import SupportTicket from '../models/SupportTicket';
 
 const router = express.Router();
 
+// Helper for Basic AI Response
+const generateAIResponse = (message: string): string => {
+    const msg = message.toLowerCase();
+    if (msg.includes('password') || msg.includes('reset') || msg.includes('forgot')) {
+        return "To reset your password, please logout and use the 'Forgot Password' link on the login screen. If you are still having issues, an admin will assist you shortly.";
+    }
+    if (msg.includes('pin') || msg.includes('lock')) {
+        return "You can manage your App Lock PIN in the Settings tab. If you forgot your PIN, you can reset it using your password.";
+    }
+    if (msg.includes('card') || msg.includes('add') || msg.includes('create')) {
+        return "You can add new cards or bank accounts directly from your Dashboard. Just click the '+' button.";
+    }
+    return "Thank you for contacting support. Our AI agent has received your query. A human manager will review it shortly and get back to you if further assistance is needed.";
+};
+
 // Create a new support ticket
 router.post('/', auth, async (req: AuthRequest, res: Response) => {
     try {
@@ -22,8 +37,18 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
             message,
             type,
             lastMessageAt: new Date(),
-            lastMessageSender: 'user'
+            lastMessageSender: 'user',
+            messages: []
         });
+
+        // AI Auto-Reply for new tickets
+        const aiResponse = generateAIResponse(message);
+        newTicket.messages.push({
+            sender: 'agent',
+            message: aiResponse,
+            timestamp: new Date()
+        });
+        newTicket.lastMessageSender = 'agent';
 
         const ticket = await newTicket.save();
         res.json(ticket);
@@ -65,11 +90,9 @@ router.post('/:id/reply', auth, async (req: AuthRequest, res: Response) => {
             return;
         }
 
-        // RESTRICTION: Block user reply if waiting for agent
-        if (ticket.status === 'open' && ticket.lastMessageSender === 'user') {
-            res.status(400).json({ message: 'Please wait for an agent to respond before sending another message.' });
-            return;
-        }
+        // RESTRICTION REMOVED: Since we have an AI agent now, we want the user to be able to reply to the AI.
+        // The original restriction blocked user if lastSender was user. 
+        // Now lastSender will likely be 'agent' (AI) immediately after user reply.
 
         ticket.messages.push({
             sender: 'user',
@@ -77,29 +100,26 @@ router.post('/:id/reply', auth, async (req: AuthRequest, res: Response) => {
             timestamp: new Date()
         });
 
-        // If ticket was closed, user can reopen it? 
-        // User requested: "no 24h rule for manager is for user". 
-        // This implies user HAS a 24h rule or some restriction? 
-        // But also "if manager accpt ticket then user can chat".
-        // Let's allow user to reply if status is NOT closed, OR if closed within 24h (the original rule for users).
-        // For now, let's just allow reply and auto-reopen if closed? 
-        // Actually, usually user replying to a closed ticket reopens it. 
-        // Let's implement basic 24h check here for USER if they try to reply to a closed ticket.
+        // AI Auto-Reply
+        const aiResponse = generateAIResponse(message);
+        setTimeout(async () => {
+            // We can't really do async setTimeout easily without re-fetching or passing the object reference cleanly if we want it to persist.
+            // For simplicity in this synchronous flow, we'll just append it immediately. 
+            // If we wanted a "typing" delay, we'd need sockets or a separate job.
+            // Immediate reply is fine for a basic bot.
+        }, 0);
+
+        ticket.messages.push({
+            sender: 'agent',
+            message: aiResponse,
+            timestamp: new Date()
+        });
 
         // Update last message metadata
         ticket.lastMessageAt = new Date();
-        ticket.lastMessageSender = 'user';
+        ticket.lastMessageSender = 'agent'; // AI replied
 
         if (ticket.status === 'closed') {
-            // Check 24h rule
-            if (ticket.closedAt) {
-                const timeDiff = Date.now() - new Date(ticket.closedAt).getTime();
-                const hoursDiff = timeDiff / (1000 * 3600);
-                if (hoursDiff > 24) {
-                    res.status(400).json({ message: 'Ticket closed for more than 24 hours. Please create a new one.' });
-                    return;
-                }
-            }
             ticket.status = 'open';
             ticket.closedAt = undefined;
         }
