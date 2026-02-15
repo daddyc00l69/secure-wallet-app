@@ -10,9 +10,22 @@ interface CardGridProps {
     revealedCardsMap?: Record<string, { number?: string; cvv?: string }>;
     onViewCvv?: (card: ICard) => void;
     onViewNumber?: (card: ICard) => void;
+    onDelete?: (id: string) => void;
+    canEdit?: boolean;
 }
 
-export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revealedNumberCardId, revealedCardsMap = {}, onViewCvv, onViewNumber }) => {
+import { Trash2 } from 'lucide-react';
+
+export const CardGrid: React.FC<CardGridProps> = ({
+    cards,
+    revealedCardId,
+    revealedNumberCardId,
+    revealedCardsMap = {},
+    onViewCvv,
+    onViewNumber,
+    onDelete,
+    canEdit
+}) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-8 justify-items-center w-full max-w-7xl mx-auto">
             {cards.map((card, index) => (
@@ -21,7 +34,7 @@ export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revea
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="w-full flex justify-center"
+                    className="w-full flex justify-center relative group"
                 >
                     <Card
                         card={card}
@@ -32,6 +45,18 @@ export const CardGrid: React.FC<CardGridProps> = ({ cards, revealedCardId, revea
                         onViewCvv={() => onViewCvv && onViewCvv(card)}
                         onViewNumber={() => onViewNumber && onViewNumber(card)}
                     />
+                    {canEdit && onDelete && card._id && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(card._id!);
+                            }}
+                            className="absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 z-50 pointer-events-auto"
+                            title="Delete Card"
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
                 </motion.div>
             ))}
         </div>
