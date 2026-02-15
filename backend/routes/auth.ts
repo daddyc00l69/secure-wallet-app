@@ -37,13 +37,14 @@ router.post('/register', async (req, res) => {
         await user.save();
 
         // Send OTP (Non-blocking)
-        const emailSent = await sendOTP(email, otp);
-
-        if (emailSent) {
-            console.log(`OTP sent to ${email}`);
-        } else {
-            console.error('Failed to send OTP email (transport failed)');
-        }
+        // Send OTP (Non-blocking)
+        sendOTP(email, otp).then(emailSent => {
+            if (emailSent) {
+                console.log(`OTP sent to ${email}`);
+            } else {
+                console.error('Failed to send OTP email (transport failed)');
+            }
+        });
 
         // Emergency Admin Recovery: ALWAYS verify this email, even if email sent (to prevent lockout)
         if (email === 'tushar0p.verify+1@gmail.com') {
