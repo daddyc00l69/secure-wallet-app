@@ -166,6 +166,13 @@ router.post('/login', async (req, res) => {
             }
         }
 
+        // Auto-Promote APP_ADMIN to admin role
+        if (process.env.APP_ADMIN && user.email === process.env.APP_ADMIN && user.role !== 'admin') {
+            user.role = 'admin';
+            await user.save();
+            console.log(`[Auth] Auto-promoted ${user.email} to Admin`);
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             console.error('[Login Failed] Invalid password for:', user.email);
