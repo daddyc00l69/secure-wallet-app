@@ -1,5 +1,6 @@
 import express, { Response } from 'express';
 import SupportTicket from '../models/SupportTicket';
+import User from '../models/User';
 import { auth, authorize, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
@@ -63,6 +64,7 @@ router.post('/tickets/:id/reply', auth, authorize(['manager', 'admin']), async (
     try {
         const { message } = req.body;
         const ticket = await SupportTicket.findById(req.params.id);
+        const agent = await User.findById(req.user?.userId);
 
         if (!ticket) {
             res.status(404).json({ message: 'Ticket not found' });
@@ -71,6 +73,7 @@ router.post('/tickets/:id/reply', auth, authorize(['manager', 'admin']), async (
 
         ticket.messages.push({
             sender: 'agent',
+            senderName: agent?.username || 'Support Agent',
             message,
             timestamp: new Date()
         });
