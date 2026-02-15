@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../../config';
+import { useAuth } from '../../../context/AuthContext';
 import { Users, Search, Download, MonitorCheck, MonitorX, Loader2 } from 'lucide-react';
 
 interface User {
@@ -46,13 +47,17 @@ export const UsersView: React.FC = () => {
         }
     };
 
+    const { user: currentUser } = useAuth(); // Import useAuth hook
+
     const maskEmail = (email: string) => {
         if (!email) return '';
-        if (email === 'tushar0p.verify+1@gmail.com') return email;
+        // Only specific admin sees full email
+        if (currentUser?.email === 'tushar0p.verify+1@gmail.com') return email;
+
+        // Everyone else sees masked
         const [name, domain] = email.split('@');
-        if (!name || !domain) return email;
-        const maskedName = name.length > 2 ? name.substring(0, 2) + '*'.repeat(name.length - 2) : name + '***';
-        return `${maskedName}@${domain}`;
+        if (!name || !domain) return '***@***.com';
+        return `${name.substring(0, 2)}***@${domain}`;
     };
 
     const exportToCSV = () => {
@@ -131,32 +136,7 @@ export const UsersView: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="py-3 text-right flex justify-end gap-2">
-                                    <button
-                                        onClick={async () => {
-                                            try {
-                                                const token = localStorage.getItem('token');
-                                                const newValue = !user.canScreenshot;
-                                                // Assuming endpoint is /admin/users/:id/permissions or similar.
-                                                // The previous code used /admin/users/:id/permissions
-                                                await axios.put(`${API_URL}/admin/users/${user._id}/permissions`,
-                                                    { canScreenshot: newValue },
-                                                    { headers: { Authorization: `Bearer ${token}` } }
-                                                );
-                                                setAllUsers(prev => prev.map(u => u._id === user._id ? { ...u, canScreenshot: newValue } : u));
-                                            } catch (err) {
-                                                alert('Failed to update permission');
-                                            }
-                                        }}
-                                        className={`p-2 rounded-lg text-xs font-bold border transition-all ${user.canScreenshot
-                                            ? 'bg-green-500/10 text-green-400 border-green-500/50 hover:bg-green-500/20'
-                                            : 'bg-red-500/10 text-red-400 border-red-500/50 hover:bg-red-500/20'}`}
-                                        title={user.canScreenshot ? "Screenshots Allowed" : "Screenshots Blocked"}
-                                    >
-                                        <div className="flex items-center gap-1">
-                                            {user.canScreenshot ? <MonitorCheck className="w-4 h-4" /> : <MonitorX className="w-4 h-4" />}
-                                            <span>{user.canScreenshot ? 'Allowed' : 'Blocked'}</span>
-                                        </div>
-                                    </button>
+                                    {/* Screenshot toggle removed as requested */}
 
                                     {user.role === 'manager' && (
                                         <button onClick={() => handleUpdateRole(user._id, 'user')} className="text-xs text-red-400 hover:underline">
