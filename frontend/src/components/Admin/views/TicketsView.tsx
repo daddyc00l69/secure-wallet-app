@@ -4,12 +4,12 @@ import { API_URL } from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 import { Ticket, Lock, Loader2, Trash2, RefreshCw } from 'lucide-react';
 
-interface Ticket {
+interface ITicket {
     _id: string;
     subject: string;
     message: string;
     status: 'open' | 'closed' | 'in_progress';
-    user: { username: string, email: string };
+    user: { _id: string, username: string, email: string };
     createdAt: string;
     escalated: boolean;
     closedAt?: string;
@@ -21,9 +21,9 @@ interface Ticket {
 }
 
 export const TicketsView: React.FC = () => {
-    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [tickets, setTickets] = useState<ITicket[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+    const [selectedTicket, setSelectedTicket] = useState<ITicket | null>(null);
     const [managers, setManagers] = useState<{ _id: string, username: string, role: string }[]>([]);
     const [reply, setReply] = useState('');
     const lastTicketsRef = useRef<string>('');
@@ -48,7 +48,7 @@ export const TicketsView: React.FC = () => {
 
                 // Update selected ticket if open
                 if (selectedTicket) {
-                    const updated = res.data.find((t: Ticket) => t._id === selectedTicket._id);
+                    const updated = res.data.find((t: ITicket) => t._id === selectedTicket._id);
                     if (updated && JSON.stringify(updated.messages) !== JSON.stringify(selectedTicket.messages)) {
                         setSelectedTicket(updated);
                     }
@@ -115,7 +115,7 @@ export const TicketsView: React.FC = () => {
     const handleReopenTicket = async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_URL}/manager/tickets/${id}/reopen`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`${API_URL}/manager/tickets/${id}/reopen`, {}, { headers: { Authorization: `Bearer ${token}` } });
             setTickets(prev => prev.map(t => t._id === id ? { ...t, status: 'open' } : t));
             if (selectedTicket?._id === id) {
                 setSelectedTicket(prev => prev ? { ...prev, status: 'open' } : null);
@@ -138,9 +138,13 @@ export const TicketsView: React.FC = () => {
     };
 
     const handleGrantAccess = async () => {
+        if (!selectedTicket) return;
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_URL}/access/grant`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.post(`${API_URL}/access/grant`,
+                { userId: selectedTicket.user._id },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             const link = `${window.location.origin}/secure-edit?token=${res.data.token}`;
 
             // Auto-paste link into reply
