@@ -77,3 +77,31 @@ export const requireEditAccess = async (req: AuthRequest, res: Response, next: N
         res.status(500).send('Server Error checking access');
     }
 };
+
+export const requireAddPermission = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    // 1. Admin/Manager/AppAdmin always allowed
+    try {
+        const User = require('../models/User').default;
+        const user = await User.findById(req.user?.user?.id);
+        if (user && (['admin', 'manager'].includes(user.role) || (process.env.APP_ADMIN && user.email === process.env.APP_ADMIN))) {
+            return next();
+        }
+    } catch (e) { /* Ignore if no user */ }
+
+    // 2. Check Token Permissions
+    const token = req.header('x-access-token');
+    if (token) {
+        try {
+            const TempAccess = require('../models/TempAccess').default;
+            const access = await TempAccess.findOne({ token });
+            if (access && access.permissions?.canAdd) {
+                return next();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // Default: Deny
+    return res.status(403).json({ message: 'Permission denied: Cannot add new items.' });
+};
