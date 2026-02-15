@@ -98,7 +98,7 @@ const MessageContent = ({ text, attachments }: { text: string, attachments?: ITi
 
 // ... (TicketsView component) ...
 
-export default function TicketsView() {
+export const TicketsView: React.FC = () => {
     const { user: currentUser } = useAuth();
     const [tickets, setTickets] = useState<ITicket[]>([]);
     const [selectedTicket, setSelectedTicket] = useState<ITicket | null>(null);
@@ -138,13 +138,6 @@ export default function TicketsView() {
             setManagers(res.data);
         } catch (err) {
             console.error('Error fetching managers:', err);
-        }
-    };
-
-    const handleReply = async () => {
-        if (!selectedTicket || !reply.trim()) return;
-        try {
-            console.error(err);
         }
     };
 
