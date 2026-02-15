@@ -6,7 +6,7 @@ export interface ISupportTicket extends Document {
     message: string;
     type: 'card_variant' | 'support' | 'bug';
     status: 'open' | 'closed' | 'in_progress';
-    messages: { sender: 'user' | 'agent', message: string, timestamp: Date }[];
+    messages: { sender: 'user' | 'agent', senderName?: string, message: string, timestamp: Date }[];
     escalated: boolean;
     closedAt?: Date;
     lastMessageAt: Date;
@@ -54,6 +54,7 @@ const SupportTicketSchema: Schema = new Schema({
     },
     messages: [{
         sender: { type: String, enum: ['user', 'agent'], required: true },
+        senderName: { type: String }, // Added for real names
         message: { type: String, required: true },
         timestamp: { type: Date, default: Date.now }
     }],
