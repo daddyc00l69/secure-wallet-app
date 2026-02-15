@@ -39,7 +39,7 @@ export function Dashboard() {
     const [revealedCards, setRevealedCards] = useState<Record<string, { number?: string; cvv?: string }>>({});
     const [pinRequestType, setPinRequestType] = useState<'cvv' | 'number'>('cvv');
 
-    const { user, setEditToken, editToken, permissions } = useAuth();
+    const { user, setEditToken, editToken } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -62,7 +62,7 @@ export function Dashboard() {
     }, [searchParams, setEditToken]);
 
     const canEdit = ['admin', 'manager'].includes(user?.role || '') || !!editToken;
-    const canAdd = ['admin', 'manager'].includes(user?.role || '') || (!!editToken && permissions?.canAdd);
+
 
     const fetchAllData = async () => {
         try {
@@ -129,12 +129,18 @@ export function Dashboard() {
         }
     };
 
-    const openAddModal = () => {
-        if (!canAdd) {
-            alert("Restricted Action: You do not have permission to add new items.");
-            return;
+    const handleDeleteCard = async (cardId: string) => {
+        if (!confirm('Are you sure you want to delete this card?')) return;
+        try {
+            await axios.delete(`${CARDS_URL}/${cardId}`);
+            setCards(cards.filter(c => c._id !== cardId));
+        } catch (err) {
+            console.error('Failed to delete card:', err);
+            alert('Failed to delete card.');
         }
+    };
 
+    const openAddModal = () => {
         if (activeTab === 'bank') {
             setIsAddBankModalOpen(true);
         } else if (activeTab === 'address') {
@@ -232,28 +238,13 @@ export function Dashboard() {
                         </div>
                         <span className="font-medium text-sm hidden sm:block">{user?.username}</span>
                     </button>
-                    {canAdd ? (
-                        <button
-                            onClick={openAddModal}
-                            className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span className="hidden sm:inline">Add New</span>
-                        </button>
-                    ) : (
-                        <div className="group relative">
-                            <button
-                                disabled
-                                className="flex items-center gap-2 bg-gray-300 text-gray-500 px-6 py-3 rounded-2xl font-semibold cursor-not-allowed"
-                            >
-                                <Plus className="w-5 h-5" />
-                                <span className="hidden sm:inline">Add New</span>
-                            </button>
-                            <div className="absolute top-full mt-2 w-48 p-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
-                                Request Edit Access via Support to add new items.
-                            </div>
-                        </div>
-                    )}
+                    <button
+                        onClick={openAddModal}
+                        className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span className="hidden sm:inline">Add New</span>
+                    </button>
                 </div>
             </motion.div>
 
@@ -339,6 +330,8 @@ export function Dashboard() {
                                 revealedCardsMap={revealedCards}
                                 onViewCvv={handleViewCvv}
                                 onViewNumber={handleViewNumber}
+                                onDelete={handleDeleteCard}
+                                canEdit={canEdit}
                             />
                         )
                     ) : activeTab === 'bank' ? (
@@ -352,19 +345,20 @@ export function Dashboard() {
                                 {bankAccounts.map(account => (
                                     <div key={account._id} className="relative group">
                                         <BankAccountCard account={account} />
-                                        <button
-                                            onClick={async () => {
-                                                if (confirm('Are you sure you want to delete this account?')) {
-                                                    await axios.delete(`${API_URL}/bank-accounts/${account._id}`);
-                                                    setBankAccounts(bankAccounts.filter(a => a._id !== account._id));
-                                                }
-                                            }}
-                                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <span className="sr-only">Delete</span>
-                                            {/* Using text for now or could import Trash Icon */}
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        {canEdit && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (confirm('Are you sure you want to delete this account?')) {
+                                                        await axios.delete(`${API_URL}/bank-accounts/${account._id}`);
+                                                        setBankAccounts(bankAccounts.filter(a => a._id !== account._id));
+                                                    }
+                                                }}
+                                                className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <span className="sr-only">Delete</span>
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -380,17 +374,19 @@ export function Dashboard() {
                                 {addresses.map(address => (
                                     <div key={address._id} className="relative group">
                                         <AddressCard address={address} />
-                                        <button
-                                            onClick={async () => {
-                                                if (confirm('Are you sure you want to delete this address?')) {
-                                                    await axios.delete(`${API_URL}/addresses/${address._id}`);
-                                                    setAddresses(addresses.filter(a => a._id !== address._id));
-                                                }
-                                            }}
-                                            className="absolute top-4 right-4 p-2 bg-black/5 hover:bg-black/10 backdrop-blur-md rounded-full text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </button>
+                                        {canEdit && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (confirm('Are you sure you want to delete this address?')) {
+                                                        await axios.delete(`${API_URL}/addresses/${address._id}`);
+                                                        setAddresses(addresses.filter(a => a._id !== address._id));
+                                                    }
+                                                }}
+                                                className="absolute top-4 right-4 p-2 bg-black/5 hover:bg-black/10 backdrop-blur-md rounded-full text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
